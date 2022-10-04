@@ -1,9 +1,13 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { UrlData } from "./types";
 import * as express from "express";
 import * as cors from "cors";
-import { getUrlDocumentDataById, createUniqueId } from "./utils";
+import {
+  getUrlDocumentDataById,
+  createUniqueId,
+  UrlData,
+  SHARE_LINK_FIRESTORE_COLLECTION,
+} from "./utils";
 import { takeScreenshot } from "./screenshot";
 import { assert } from "@actnowcoalition/assert";
 
@@ -12,7 +16,7 @@ const app = express();
 app.use(cors({ origin: true }));
 const runtimeOpts = {
   timeoutSeconds: 90,
-  memory: "1GB" as "1GB", // idk why this casting is necessary???
+  memory: "1GB" as "1GB", // idk why this casting is necessary?
 };
 exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 
@@ -24,7 +28,8 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 app.post("/registerUrl", async (req, res) => {
   const imageUrl = req.body.imageUrl as string;
 
-  const urlCollection = admin.firestore().collection("urls");
+  const db = admin.firestore();
+  const urlCollection = db.collection(SHARE_LINK_FIRESTORE_COLLECTION);
   const documentId = await createUniqueId(urlCollection);
 
   // TODO: Better way to handle missing data than coercing to empty strings?
@@ -134,7 +139,6 @@ app.get("/dynamic-image/*", async (req, res) => {
     res.status(400).send(errorMsg);
     return;
   }
-  // TODO: check if entry for photo already exists, and if so override the existing entry?
   takeScreenshot(screenshotUrl, "temp")
     .then((file: string) => {
       console.log("screenshot generated.");
@@ -142,10 +146,8 @@ app.get("/dynamic-image/*", async (req, res) => {
       // override this with the ?no-cache query param (useful for testing or for
       // the scheduled ping that tries to keep functions warm).
       // TODO(michael): Consider moving this to middleware (but how do we avoid caching errors?)
-      if (req.query["no-cache"] === undefined) {
-        console.log("Setting cache-control header.");
-        res.header("cache-control", "public, max-age=86400");
-      }
+      console.log("Setting cache-control header.");
+      res.header("cache-control", "public, max-age=86400");
 
       res.sendFile(file);
     })
@@ -169,7 +171,7 @@ app.get("/dynamic-image/*", async (req, res) => {
  */
 app.get("/getShareLinkUrl/:url", (req, res) => {
   const db = admin.firestore();
-  db.collection("urls")
+  db.collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .where("url", "==", req.params.url)
     .get()
     .then((querySnapshot) => {
@@ -190,22 +192,3 @@ app.get("/getShareLinkUrl/:url", (req, res) => {
       res.status(500).send(`Internal Error: ${JSON.stringify(err)}`);
     });
 });
-
-/**
- * Scheduled function that runs the dynamic-image endpoint every 4 minutes to keep it warm.
- */
-exports.scheduledScreenshotRequest = functions.pubsub
-  .schedule("every 4 minutes")
-  .onRun((context) => {
-    // Fetch an arbitrary share image (MA overview)
-    const imageUrl = "https://covidactnow.org/internal/share-image/states/ma";
-    const apiUrl =
-      "https://us-central1-test-url-api.cloudfunctions.net/api/dynamic-image/";
-    fetch(`${apiUrl}${imageUrl}`)
-      .then((response) => {
-        console.log("Scheduled screenshot request succeeded.");
-      })
-      .catch((error) => {
-        console.error("Scheduled screenshot request failed.", error);
-      });
-  });

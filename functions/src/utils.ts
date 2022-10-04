@@ -1,9 +1,13 @@
-import { takeScreenshot } from "./screenshot";
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
-import { UrlData } from "./types";
 
-const storageBucket = "test-url-api-images";
+export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
+export type UrlData = {
+  url: string;
+  imageUrl?: string;
+  title?: string;
+  description?: string;
+};
 
 /**
  * Fetch corresponding data for a given shortened url from Firestore.
@@ -15,7 +19,10 @@ const storageBucket = "test-url-api-images";
  */
 export async function getUrlDocumentDataById(documentId: string) {
   const db = admin.firestore();
-  const querySnapshot = await db.collection("urls").doc(documentId).get();
+  const querySnapshot = await db
+    .collection(SHARE_LINK_FIRESTORE_COLLECTION)
+    .doc(documentId)
+    .get();
   if (!querySnapshot.exists) {
     throw new Error(`Document with id ${documentId} doesn't exist`);
   }
@@ -23,25 +30,11 @@ export async function getUrlDocumentDataById(documentId: string) {
 }
 
 /**
- * Take screenshot of given url, upload screenshot to storage, and return the url.
- *
- * @param url url to screenshot
- * @param filename name of file to store in storage
- * @returns url of screenshot in storage
+ * Creates a unique id for a document in a given collection.
+ * 
+ * @param collection Firestore collection to check for uniqueness
+ * @returns 
  */
-export async function takeAndUploadScreenshot(url: string, filename: string) {
-  const screenshot = await takeScreenshot(url, filename);
-  const bucket = admin.storage().bucket(storageBucket);
-  return bucket
-    .upload(screenshot, { predefinedAcl: "publicRead" })
-    .then(() => {
-      return `https://storage.googleapis.com/test-url-api-images/${filename}.png`;
-    })
-    .catch(() => {
-      console.log("Error uploading screenshot to storage.");
-    });
-}
-
 export async function createUniqueId(
   collection: admin.firestore.CollectionReference
 ): Promise<string> {

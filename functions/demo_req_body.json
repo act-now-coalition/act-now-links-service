@@ -1,6 +1,0 @@
-{
-  "imageUrl": "https://us-central1-test-url-api.cloudfunctions.net/api/dynamic-image/https://covidactnow.org/internal/share-image/map",
-  "url": "https://hackathon-september-2022-4dve-n02dnqa1p-covidactnow.vercel.app/#cases-map",
-  "Title": "Covid Act Now - Weekly New Cases Map",
-  "description": "See how COVID-19 cases are changing in your community and across the country."
-}
