@@ -15,7 +15,7 @@ import { assert } from "@actnowcoalition/assert";
 admin.initializeApp();
 const firestoreDb = admin.firestore();
 const app = express();
-app.use(cors({ origin: true }));
+app.use(cors({ origin: "*" }));
 const runtimeOpts = {
   timeoutSeconds: 90,
   memory: "1GB" as "1GB", // idk why this casting is necessary?
