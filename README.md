@@ -19,12 +19,12 @@ with meta tags according to the request body params. On success, returns the URL
     #### Required: `Content-Type:application/json`
 
 * ### Data Params:
-    |     Parameter      | Data Type | Description |
-    | ----------- | ----------- | ---------------|                
-    | `url`      | `string`      |  Url to create share link for |
-    | `title`   | `string`        | Title meta tag                 |
-    | `description`   | `string`        | Description meta tag  |
-    | `imageUrl`   | `string`        | Url of image to use as image meta tag |
+    |     Parameter      | Data Type | Description | Required |
+    | ----------- | ----------- | ---------------| ------------|                 
+    | `url`      | `string`      |  Url to create share link for | `true` |
+    | `title`   | `string`        | Title meta tag                 | `false` |
+    | `description`   | `string`        | Description meta tag  | `false` |
+    | `imageUrl`   | `string`        | Url of image to use as image meta tag | `false` |
 
 
 * ### Success Response:
