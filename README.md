@@ -7,7 +7,7 @@ API base-URL: `https://us-central1-act-now-links-dev.cloudfunctions.net`
 
 ## Create a share link:
 
-Registers a new share link, or updates the existing one if a share link for the supplied URL already exists,
+Registers a new share link, or updates the existing one if a share link already exists for the supplied URL,
 with meta tags according to the request body params. On success, returns the URL of the new or updated share link.
 
 * ### URL:  `/api/registerUrl`
