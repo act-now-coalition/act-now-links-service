@@ -7,7 +7,7 @@ API base-URL: `https://us-central1-act-now-links-dev.cloudfunctions.net`
 
 ## Create a share link:
 
-Registers a new share link, or updates the existing one if a share link for the supplied URL already exists,
+Registers a new share link, or updates the existing one if a share link already exists for the supplied URL,
 with meta tags according to the request body params. On success, returns the URL of the new or updated share link.
 
 * ### URL:  `/api/registerUrl`
@@ -19,12 +19,12 @@ with meta tags according to the request body params. On success, returns the URL
     #### Required: `Content-Type:application/json`
 
 * ### Data Params:
-    |     Parameter      | Data Type | Description |
-    | ----------- | ----------- | ---------------|                
-    | `url`      | `string`      |  Url to create share link for |
-    | `title`   | `string`        | Title meta tag                 |
-    | `description`   | `string`        | Description meta tag  |
-    | `imageUrl`   | `string`        | Url of image to use as image meta tag |
+    |     Parameter      | Data Type | Description | Required |
+    | ----------- | ----------- | ---------------| ------------|                 
+    | `url`      | `string`      |  Url to create share link for | `true` |
+    | `title`   | `string`        | Title meta tag                 | `false` |
+    | `description`   | `string`        | Description meta tag  | `false` |
+    | `imageUrl`   | `string`        | Url of image to use as image meta tag | `false` |
 
 
 * ### Success Response:
@@ -86,7 +86,7 @@ to indicate where to capture and when the screenshot is ready to be taken, e.g.:
 * **Sample Call:**
 
     ```bash
-    wget -O image.ong "<baseurl>/api/screenshot/https://covidactnow.org/internal/share-image/states/ma"
+    wget -O img.png "<baseurl>/api/screenshot/https://covidactnow.org/internal/share-image/states/ma"
     ```
 
 ## Retrieve an Existing Share Link By Its Orignal URL:
