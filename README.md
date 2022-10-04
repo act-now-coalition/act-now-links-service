@@ -86,7 +86,7 @@ to indicate where to capture and when the screenshot is ready to be taken, e.g.:
 * **Sample Call:**
 
     ```bash
-    wget -O image.ong "<baseurl>/api/screenshot/https://covidactnow.org/internal/share-image/states/ma"
+    wget -O img.png "<baseurl>/api/screenshot/https://covidactnow.org/internal/share-image/states/ma"
     ```
 
 ## Retrieve an Existing Share Link By Its Orignal URL:
