@@ -1,7 +1,9 @@
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 
+export const API_BASE_URL = "https://us-central1-act-now-links-dev.cloudfunctions.net/api";
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
+
 export type UrlData = {
   url: string;
   imageUrl?: string;

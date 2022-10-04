@@ -7,11 +7,13 @@ import {
   createUniqueId,
   UrlData,
   SHARE_LINK_FIRESTORE_COLLECTION,
+  API_BASE_URL
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
 import { assert } from "@actnowcoalition/assert";
 
 admin.initializeApp();
+const firestoreDb = admin.firestore();
 const app = express();
 app.use(cors({ origin: true }));
 const runtimeOpts = {
@@ -32,8 +34,7 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 app.post("/registerUrl", async (req, res) => {
   const imageUrl = req.body.imageUrl as string;
 
-  const db = admin.firestore();
-  const urlCollection = db.collection(SHARE_LINK_FIRESTORE_COLLECTION);
+  const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
   const documentId = await createUniqueId(urlCollection);
 
   // TODO: Better way to handle missing data than coercing to empty strings?
@@ -44,7 +45,6 @@ app.post("/registerUrl", async (req, res) => {
     description: req.body.description ?? "",
   };
 
-  const baseUrl = "https://us-central1-test-url-api.cloudfunctions.net/api/";
   urlCollection
     .where("url", "==", data.url)
     .get()
@@ -55,7 +55,7 @@ app.post("/registerUrl", async (req, res) => {
           .doc(documentId)
           .set(data)
           .then(() => {
-            res.status(200).send(`${baseUrl}${documentId}`);
+            res.status(200).send(`${API_BASE_URL}/${documentId}`);
           })
           .catch((err) => {
             res.status(500).send(`error ${JSON.stringify(err)}`);
@@ -72,7 +72,7 @@ app.post("/registerUrl", async (req, res) => {
             );
         }
         doc.ref.update(data).then(() => {
-          res.status(200).send(`${baseUrl}${doc.id}`);
+          res.status(200).send(`${API_BASE_URL}/${doc.id}`);
         });
       } else {
         res
@@ -88,7 +88,7 @@ app.post("/registerUrl", async (req, res) => {
  * Redirects share link url to original url.
  *
  * Expected url structure:
- * https://us-central1-test-url-api.cloudfunctions.net/api/SHORT_URL_HERE
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/SHORT_URL_HERE
  */
 app.get("/:url", (req, res) => {
   const shortUrl = req.params.url;
@@ -130,7 +130,7 @@ app.get("/:url", (req, res) => {
  * Takes a screenshot of the given url and returns the file.
  *
  * Expected url structure:
- * https://us-central1-test-url-api.cloudfunctions.net/api/screenshot/URL_HERE
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot/URL_HERE
  * 
  * The target URL must contain divs with 'screenshot' and 'screenshot-ready' classes
  * to indicate where and when the screenshot is ready to be taken.
@@ -158,6 +158,8 @@ app.get("/screenshot/*", async (req, res) => {
     res.status(400).send(errorMsg);
     return;
   }
+  // We might have issues with collisions if multiple screenshots are taken at the same time.
+  // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
   takeScreenshot(screenshotUrl, "temp")
     .then((file: string) => {
       console.log("screenshot generated.");
@@ -181,13 +183,12 @@ app.get("/screenshot/*", async (req, res) => {
  * Retrieves the share link for a given url, if it exists.
  *
  * Expected url structure:
- * https://us-central1-test-url-api.cloudfunctions.net/api/getShareLinkUrl/URL_HERE
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/URL_HERE
  *
  * Returns the share link url if it exists, otherwise returns a 404.
  */
 app.get("/getShareLinkUrl/:url", (req, res) => {
-  const db = admin.firestore();
-  db.collection(SHARE_LINK_FIRESTORE_COLLECTION)
+  firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .where("url", "==", req.params.url)
     .get()
     .then((querySnapshot) => {
@@ -199,9 +200,7 @@ app.get("/getShareLinkUrl/:url", (req, res) => {
         res.status(404).send("No share link exists for this URL.");
       } else {
         const doc = querySnapshot.docs[0];
-        const baseUrl =
-          "https://us-central1-test-url-api.cloudfunctions.net/api/";
-        res.status(200).send(`${baseUrl}${doc.id}`);
+        res.status(200).send(`${API_BASE_URL}/${doc.id}`);
       }
     })
     .catch((err) => {
