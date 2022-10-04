@@ -36,11 +36,15 @@ app.post("/registerUrl", async (req, res) => {
 
   const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
   const documentId = await createUniqueId(urlCollection);
+  if (!req.body.url) {
+    res.status(400).send("Missing url argument.");
+    return;
+  }
 
   // TODO: Better way to handle missing data than coercing to empty strings?
   const data: UrlData = {
     imageUrl: imageUrl ?? "",
-    url: req.body.url ?? "",
+    url: req.body.url,
     title: req.body.title ?? "",
     description: req.body.description ?? "",
   };
