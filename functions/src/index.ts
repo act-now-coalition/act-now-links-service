@@ -191,9 +191,18 @@ app.get("/screenshot/*", async (req, res) => {
  *
  * Returns the share link url if it exists, otherwise returns a 404.
  */
-app.get("/getShareLinkUrl/:url", (req, res) => {
+app.get("/getShareLinkUrl/*", (req, res) => {
+  // TODO: see above TODO about URL param parsing issue.
+  const urlSplit = req.url.split("getShareLinkUrl/");
+  // Extra slashes automatically get stripped out, but we need to keep these slashes
+  // in order to correctly match the url in firestore. This is another with passing URLs as params.
+  const screenshotUrl = urlSplit[urlSplit.length - 1]
+    .replace("https:/w", "https://w")
+    .replace("http:/w", "http://w");
+
+  console.log("screenshotUrl: ", screenshotUrl, "url: ", req.url);
   firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION)
-    .where("url", "==", req.params.url)
+    .where("url", "==", screenshotUrl)
     .get()
     .then((querySnapshot) => {
       assert(
