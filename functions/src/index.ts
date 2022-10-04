@@ -23,7 +23,11 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 /**
  * Register a new shortened url.
  *
- * Requires `content-type: application/json` header and a JSON body (document the args here).
+ * Requires a `content-type: application/json` header and a JSON body with the following arguments:
+ *  - url: string
+ *  - imageUrl?: string
+ *  - title?: string
+ *  - description?: string
  */
 app.post("/registerUrl", async (req, res) => {
   const imageUrl = req.body.imageUrl as string;
@@ -123,29 +127,41 @@ app.get("/:url", (req, res) => {
 });
 
 /**
- * Takes a screenshot of the given url and returns the url of the screenshot.
+ * Takes a screenshot of the given url and returns the file.
  *
  * Expected url structure:
- * https://us-central1-test-url-api.cloudfunctions.net/api/dynamic-image/URL_HERE
- *
+ * https://us-central1-test-url-api.cloudfunctions.net/api/screenshot/URL_HERE
+ * 
+ * The target URL must contain divs with 'screenshot' and 'screenshot-ready' classes
+ * to indicate where and when the screenshot is ready to be taken.
+ * 
+ * e.g. 
+ * ```html
+ *  <div class="screenshot">
+ *    <div class="screenshot-ready">
+ *      {content to screenshot}
+ *    </div>
+ *  </div>
+ * ```
  */
-app.get("/dynamic-image/*", async (req, res) => {
-  const urlSplit = req.url.split("dynamic-image/");
+app.get("/screenshot/*", async (req, res) => {
+  // TODO: This is hacky. The request/function had issues accepting a url as a query param
+  // due to some (I think) encoding/parsing issues. So instead, we just grab everything after 
+  // `screenshot/` and use that as the url to avoid the request itself having to parse the url.
+  // This means if the url itself includes `screenshot/` then this could break.
+  const urlSplit = req.url.split("screenshot/");
   const screenshotUrl = urlSplit[urlSplit.length - 1];
   if (!screenshotUrl || screenshotUrl.length === 0) {
     const errorMsg =
       `Missing url query parameter.` +
-      `Expected structure: https://<...>.net/api/screenshot?url=URL_HERE`;
+      `Expected structure: https://<...>.net/api/screenshot/URL_HERE`;
     res.status(400).send(errorMsg);
     return;
   }
   takeScreenshot(screenshotUrl, "temp")
     .then((file: string) => {
       console.log("screenshot generated.");
-      // Normally we let the CDN and the browser cache for 24hrs, but you can
-      // override this with the ?no-cache query param (useful for testing or for
-      // the scheduled ping that tries to keep functions warm).
-      // TODO(michael): Consider moving this to middleware (but how do we avoid caching errors?)
+      // Let the CDN and the browser cache for 24hrs.
       console.log("Setting cache-control header.");
       res.header("cache-control", "public, max-age=86400");
 
