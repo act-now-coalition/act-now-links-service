@@ -112,5 +112,5 @@ If it exists, return the share link with the same URL as the supplied original U
 * **Sample Call:**
 
     ```bash
-    wget -O image.ong "<baseurl>/api/screenshot/https://covidactnow.org/internal/share-image/states/ma"
+    curl -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/https://www.covidactnow.org"
     ```
