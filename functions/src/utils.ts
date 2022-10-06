@@ -1,7 +1,8 @@
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 
-export const API_BASE_URL = "https://us-central1-act-now-links-dev.cloudfunctions.net/api";
+export const API_BASE_URL =
+  "https://us-central1-act-now-links-dev.cloudfunctions.net/api";
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
 
 export type UrlData = {
@@ -33,9 +34,9 @@ export async function getUrlDocumentDataById(documentId: string) {
 
 /**
  * Creates a unique id for a document in a given collection.
- * 
+ *
  * @param collection Firestore collection to check for uniqueness
- * @returns 
+ * @returns
  */
 export async function createUniqueId(
   collection: admin.firestore.CollectionReference

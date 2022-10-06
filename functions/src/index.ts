@@ -7,7 +7,7 @@ import {
   createUniqueId,
   SHARE_LINK_FIRESTORE_COLLECTION,
   API_BASE_URL,
-  stripUrlProtocol
+  stripUrlProtocol,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
 
@@ -23,9 +23,9 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 
 /**
  * Register a new shortened url.
- * 
+ *
  * TODO: There's a potential for a race condition here. If two requests are made to register the
- * same url at the same time, both will requests will create a new document. We expect there to 
+ * same url at the same time, both will requests will create a new document. We expect there to
  * only ever be one share link per URL. Need to put some thought into how to handle this.
  *
  * Requires a `content-type: application/json` header and a JSON body with the following arguments:
@@ -142,11 +142,11 @@ app.get("/:url", (req, res) => {
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot/URL_HERE
- * 
+ *
  * The target URL must contain divs with 'screenshot' and 'screenshot-ready' classes
  * to indicate where and when the screenshot is ready to be taken.
- * 
- * e.g. 
+ *
+ * e.g.
  * ```html
  *  <div class="screenshot">
  *    <div class="screenshot-ready">
@@ -157,7 +157,7 @@ app.get("/:url", (req, res) => {
  */
 app.get("/screenshot/*", async (req, res) => {
   // TODO: This is hacky. The request/function had issues accepting a url as a query param
-  // due to some (I think) encoding/parsing issues. So instead, we just grab everything after 
+  // due to some (I think) encoding/parsing issues. So instead, we just grab everything after
   // `screenshot/` and use that as the url to avoid the request itself having to parse the url.
   // This means if the url itself includes `screenshot/` then this could break.
   const urlSplit = req.url.split("screenshot/");
@@ -201,17 +201,22 @@ app.get("/screenshot/*", async (req, res) => {
 app.get("/getShareLinkUrl/*", (req, res) => {
   // TODO: see above TODO about URL param parsing issue.
   const urlSplit = req.url.split("getShareLinkUrl/");
-  const screenshotUrl = stripUrlProtocol(urlSplit[urlSplit.length - 1])
+  const screenshotUrl = stripUrlProtocol(urlSplit[urlSplit.length - 1]);
 
-  firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION)
+  firestoreDb
+    .collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .where("strippedUrl", "==", screenshotUrl)
     .get()
     .then((querySnapshot) => {
       // TODO: See registerUrl about race condition. We should expect at most 1 document here, but
-      // it's possible that multiple exist at the moment. This needs to be fixed, 
+      // it's possible that multiple exist at the moment. This needs to be fixed,
       // but until then we just take the first document if multiple exist.
       if (querySnapshot.size < 1) {
-        res.status(404).send(`Unexpected number or documents for URL. Expected 1 got ${querySnapshot.size}`);
+        res
+          .status(404)
+          .send(
+            `Unexpected number or documents for URL. Expected 1 got ${querySnapshot.size}`
+          );
       } else {
         const doc = querySnapshot.docs[0];
         res.status(200).send(`${API_BASE_URL}/${doc.id}`);
