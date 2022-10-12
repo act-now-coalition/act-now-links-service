@@ -117,3 +117,33 @@ Original URL should be encoded using JavaScript's `encodeURIComponent()` functio
     ```bash
     curl -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/https://www.covidactnow.org"
     ```
+
+# Setup
+
+## Getting Started:
+
+To get setup:
+
+- If applicable, make sure you have access to the `act-now-links-dev` Google Firebase project.
+- Clone the repo with: `git clone https://github.com/covid-projections/act-now-links-service.git`
+- Move to the repo directory: `cd act-now-links-service`
+- Install firebase tools and CLI: `yarn global add firebase-tools`
+- Login to firebase: `firebase login`, this will open a browser to sign in through in order to give you authentication to interact with the project.
+- `cd functions/ && yarn dev`
+
+## Running Emulators for local development
+For local development, we can run emulators such that we do not need to deploy our changes to the production at every step.
+
+This project uses Firestore and Functions, so we will only need to configure emulators for these services. To do so:
+
+- Run `firebase init emulators` and select `functions` and `firestore` from the dropdown selections with spacebar, and confirm selections with enter.
+- Once the setup has completed, we can start the emulator with `firebase emulator:start`. The firestore emulator relies on Java, so if you encounter an error like ```The operation couldn’t be completed. Unable to locate a Java Runtime.``` it is either because you do not have Java installed, or the installation cannot be found. 
+    - If you do not have Java installed, install it with `brew install Java` (on Mac). On completion, run `java`; if the same error is raised as above, follow the next step, otherwise skip it. 
+    - To locate/link to your Java installation run `sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk` (see this [StackOverflow post](https://stackoverflow.com/questions/65601196/how-to-brew-install-java) for context). 
+    - Re-run `firebase emulator:start` to hopefully see that the start is successful.
+- Once the emulators are running you can interact with the local instance the same as you would production, following the ports/locations specified by the displayed in the terminal. By default, the functions emulator is set to run on `localhost:5001`, creating endpoints at `localhost:5001/act-now-links-dev/central-us1/api`.
+- The emulator will update whenever the project is built. We can have changes applied on save by running `yarn build:watch` in `functions/` in a separate terminal window.
+
+## Deploying changes: 
+We don't yet have a system for deploying changes to production. To deploy any changes to your functions, after making sure you're authorized by using `firebase login`, run `yarn deploy`.
+
