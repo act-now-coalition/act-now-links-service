@@ -152,7 +152,8 @@ To get setup:
 * Move to the repo directory: `cd act-now-links-service`
 * Install firebase tools and CLI: `yarn global add firebase-tools`
 * Login to firebase: `firebase login`, this will open a browser to sign in through in order to give you authentication to interact with the project.
-* `cd functions/ && yarn dev`
+* Make sure that you are using Node 16
+* `cd functions/ && yarn serve`
 
 ### Running emulators for local development
 
