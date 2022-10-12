@@ -5,9 +5,11 @@ import * as cors from "cors";
 import {
   getUrlDocumentDataById,
   createUniqueId,
-  UrlData,
+  ShareLinkRegisterParams,
   SHARE_LINK_FIRESTORE_COLLECTION,
-  API_BASE_URL
+  API_BASE_URL,
+  stripProtocolAndSlashes,
+  ShareLinksCollection,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
 
@@ -41,15 +43,16 @@ app.post("/registerUrl", async (req, res) => {
   }
 
   // TODO: Better way to handle missing data than coercing to empty strings?
-  const data: UrlData = {
+  const data: ShareLinkRegisterParams = {
     imageUrl: imageUrl ?? "",
     url: req.body.url,
     title: req.body.title ?? "",
     description: req.body.description ?? "",
+    strippedUrlKey: stripProtocolAndSlashes(req.body.url),
   };
 
   urlCollection
-    .where("url", "==", data.url)
+    .where(ShareLinksCollection.STRIPPED_URL_KEY, "==", data.strippedUrlKey)
     .get()
     .then((querySnapshot) => {
       // Create a new document if the URL doesn't already have an entry.
@@ -93,8 +96,8 @@ app.post("/registerUrl", async (req, res) => {
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/SHORT_URL_HERE
  */
-app.get("/:url", (req, res) => {
-  const shortUrl = req.params.url;
+app.get("/:id", (req, res) => {
+  const shortUrl = req.params.id;
   if (!shortUrl || shortUrl.length === 0) {
     const errorMsg =
       "Missing URL parameter. " +
@@ -134,11 +137,11 @@ app.get("/:url", (req, res) => {
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot/URL_HERE
- * 
+ *
  * The target URL must contain divs with 'screenshot' and 'screenshot-ready' classes
  * to indicate where and when the screenshot is ready to be taken.
- * 
- * e.g. 
+ *
+ * e.g.
  * ```html
  *  <div class="screenshot">
  *    <div class="screenshot-ready">
@@ -147,13 +150,8 @@ app.get("/:url", (req, res) => {
  *  </div>
  * ```
  */
-app.get("/screenshot/*", async (req, res) => {
-  // TODO: This is hacky. The request/function had issues accepting a url as a query param
-  // due to some (I think) encoding/parsing issues. So instead, we just grab everything after 
-  // `screenshot/` and use that as the url to avoid the request itself having to parse the url.
-  // This means if the url itself includes `screenshot/` then this could break.
-  const urlSplit = req.url.split("screenshot/");
-  const screenshotUrl = urlSplit[urlSplit.length - 1];
+app.get("/screenshot/:url", async (req, res) => {
+  const screenshotUrl = decodeURIComponent(req.params.url);
   if (!screenshotUrl || screenshotUrl.length === 0) {
     const errorMsg =
       `Missing url query parameter.` +
@@ -190,18 +188,12 @@ app.get("/screenshot/*", async (req, res) => {
  *
  * Returns the share link url if it exists, otherwise returns a 404.
  */
-app.get("/getShareLinkUrl/*", (req, res) => {
-  // TODO: see above TODO about URL param parsing issue.
-  const urlSplit = req.url.split("getShareLinkUrl/");
-  // Extra slashes automatically get stripped out, but we need to keep these slashes
-  // in order to correctly match the url in firestore. This is another with passing URLs as params.
-  const screenshotUrl = urlSplit[urlSplit.length - 1]
-    .replace("https:/w", "https://w")
-    .replace("http:/w", "http://w");
-
-  console.log("screenshotUrl: ", screenshotUrl, "url: ", req.url);
-  firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION)
-    .where("url", "==", screenshotUrl)
+app.get("/getShareLinkUrl/:url", (req, res) => {
+  const screenshotUrl = decodeURIComponent(req.params.url);
+  const strippedUrlKey = stripProtocolAndSlashes(screenshotUrl);
+  firestoreDb
+    .collection(SHARE_LINK_FIRESTORE_COLLECTION)
+    .where(ShareLinksCollection.STRIPPED_URL_KEY, "==", strippedUrlKey)
     .get()
     .then((querySnapshot) => {
       if (querySnapshot.size === 0) {

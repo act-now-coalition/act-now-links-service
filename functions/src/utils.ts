@@ -1,16 +1,30 @@
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
+import * as firebaseSettings from "../../firebase.json";
 
-export const API_BASE_URL =
-  "https://us-central1-act-now-links-dev.cloudfunctions.net/api";
+const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
+export const API_BASE_URL = isEmulator
+  ? `localhost:${firebaseSettings.emulators.functions.port}/act-now-links-dev/us-central1/api`
+  : "https://us-central1-act-now-links-dev.cloudfunctions.net/api";
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
 
-export type UrlData = {
+/** Request body parameters for /registerUrl API calls. */
+export type ShareLinkRegisterParams = {
   url: string;
   imageUrl?: string;
   title?: string;
   description?: string;
+  strippedUrlKey: string;
 };
+
+/** Fields found in the firestore share-links collection.  */
+export enum ShareLinksCollection {
+  URL = "url",
+  IMAGE_URL = "imageUrl",
+  TITLE = "title",
+  DESCRIPTION = "description",
+  STRIPPED_URL_KEY = "strippedUrlKey",
+}
 
 /**
  * Fetch corresponding data for a given shortened url from Firestore.
@@ -29,7 +43,7 @@ export async function getUrlDocumentDataById(documentId: string) {
   if (!querySnapshot.exists) {
     throw new Error(`Document with id ${documentId} doesn't exist`);
   }
-  return querySnapshot.data() as UrlData;
+  return querySnapshot.data() as ShareLinkRegisterParams;
 }
 
 /**
@@ -52,6 +66,6 @@ export async function createUniqueId(
   }
 }
 
-export function stripUrlProtocol(url: string): string {
+export function stripProtocolAndSlashes(url: string): string {
   return url.replace(/^https?:\/\/?/, "").replace(/\//g, "");
 }

@@ -56,6 +56,7 @@ with meta tags according to the request body params. On success, returns the URL
 
 ## Take a Screenshot of a Share Image Page:
 Generates a screenshot of the given target URL and returns the image.
+Target URL should be encoded using JavaScript's `encodeURIComponent()` function.
 
 The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` classes
 to indicate where to capture and when the screenshot is ready to be taken, e.g.:
@@ -70,7 +71,7 @@ to indicate where to capture and when the screenshot is ready to be taken, e.g.:
  We can combine this endpoint with `/api/registerUrl` to create share links with dynamic images by
  supplying an `api/screenshot/` URL as the `imageUrl` data param when creating a new share link.
 
-* ### URL:  `/api/screenshot/<target-URL>`
+* ### URL:  `/api/screenshot/<encoded-target-URL>`
 
 * ### Method: `GET`
 
@@ -92,8 +93,10 @@ to indicate where to capture and when the screenshot is ready to be taken, e.g.:
 ## Retrieve an Existing Share Link By Its Orignal URL:
 
 If it exists, return the share link with the same URL as the supplied original URL.
+Original URL should be encoded using JavaScript's `encodeURIComponent()` function.
 
-* ### URL:  `/api/getShareLinkUrl/<original-URL>`
+
+* ### URL:  `/api/getShareLinkUrl/<encoded-original-URL>`
 
 * ### Method: `GET`
 
