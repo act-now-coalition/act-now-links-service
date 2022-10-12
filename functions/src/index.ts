@@ -5,9 +5,9 @@ import * as cors from "cors";
 import {
   getUrlDocumentDataById,
   createUniqueId,
+  UrlData,
   SHARE_LINK_FIRESTORE_COLLECTION,
-  API_BASE_URL,
-  stripUrlProtocol,
+  API_BASE_URL
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
 
@@ -24,10 +24,6 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 /**
  * Register a new shortened url.
  *
- * TODO: There's a potential for a race condition here. If two requests are made to register the
- * same url at the same time, both will requests will create a new document. We expect there to
- * only ever be one share link per URL. Need to put some thought into how to handle this.
- *
  * Requires a `content-type: application/json` header and a JSON body with the following arguments:
  *  - url: string
  *  - imageUrl?: string
@@ -43,21 +39,17 @@ app.post("/registerUrl", async (req, res) => {
     res.status(400).send("Missing url argument.");
     return;
   }
-  // Creating a "standardized" version of the URL that can be made for lookups,
-  // since the protocol may differ and slashes may be removed, but we still want the URLs to match.
-  const strippedUrl = stripUrlProtocol(req.body.url);
 
   // TODO: Better way to handle missing data than coercing to empty strings?
-  const data = {
+  const data: UrlData = {
     imageUrl: imageUrl ?? "",
     url: req.body.url,
     title: req.body.title ?? "",
     description: req.body.description ?? "",
-    strippedUrl: strippedUrl,
   };
 
   urlCollection
-    .where("strippedUrl", "==", strippedUrl)
+    .where("url", "==", data.url)
     .get()
     .then((querySnapshot) => {
       // Create a new document if the URL doesn't already have an entry.
@@ -73,7 +65,7 @@ app.post("/registerUrl", async (req, res) => {
           });
       }
       // Update the existing document if the URL already has an entry.
-      else if (querySnapshot.size === 1) {
+      else if (querySnapshot.size >= 1) {
         const doc = querySnapshot.docs[0];
         if (!doc.exists) {
           res
@@ -142,11 +134,11 @@ app.get("/:url", (req, res) => {
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot/URL_HERE
- *
+ * 
  * The target URL must contain divs with 'screenshot' and 'screenshot-ready' classes
  * to indicate where and when the screenshot is ready to be taken.
- *
- * e.g.
+ * 
+ * e.g. 
  * ```html
  *  <div class="screenshot">
  *    <div class="screenshot-ready">
@@ -157,7 +149,7 @@ app.get("/:url", (req, res) => {
  */
 app.get("/screenshot/*", async (req, res) => {
   // TODO: This is hacky. The request/function had issues accepting a url as a query param
-  // due to some (I think) encoding/parsing issues. So instead, we just grab everything after
+  // due to some (I think) encoding/parsing issues. So instead, we just grab everything after 
   // `screenshot/` and use that as the url to avoid the request itself having to parse the url.
   // This means if the url itself includes `screenshot/` then this could break.
   const urlSplit = req.url.split("screenshot/");
@@ -201,22 +193,19 @@ app.get("/screenshot/*", async (req, res) => {
 app.get("/getShareLinkUrl/*", (req, res) => {
   // TODO: see above TODO about URL param parsing issue.
   const urlSplit = req.url.split("getShareLinkUrl/");
-  const screenshotUrl = stripUrlProtocol(urlSplit[urlSplit.length - 1]);
+  // Extra slashes automatically get stripped out, but we need to keep these slashes
+  // in order to correctly match the url in firestore. This is another with passing URLs as params.
+  const screenshotUrl = urlSplit[urlSplit.length - 1]
+    .replace("https:/w", "https://w")
+    .replace("http:/w", "http://w");
 
-  firestoreDb
-    .collection(SHARE_LINK_FIRESTORE_COLLECTION)
-    .where("strippedUrl", "==", screenshotUrl)
+  console.log("screenshotUrl: ", screenshotUrl, "url: ", req.url);
+  firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION)
+    .where("url", "==", screenshotUrl)
     .get()
     .then((querySnapshot) => {
-      // TODO: See registerUrl about race condition. We should expect at most 1 document here, but
-      // it's possible that multiple exist at the moment. This needs to be fixed,
-      // but until then we just take the first document if multiple exist.
-      if (querySnapshot.size < 1) {
-        res
-          .status(404)
-          .send(
-            `Unexpected number or documents for URL. Expected 1 got ${querySnapshot.size}`
-          );
+      if (querySnapshot.size === 0) {
+        res.status(404).send("No share link exists for this URL.");
       } else {
         const doc = querySnapshot.docs[0];
         res.status(200).send(`${API_BASE_URL}/${doc.id}`);
