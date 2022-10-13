@@ -167,9 +167,11 @@ This project uses Firestore and Functions, so we will only need to configure emu
   * If you do not have Java installed, install it with `brew install Java` (on Mac). On completion, run `java`; if the same error is raised as above, follow the next step, otherwise skip it.
   * To locate/link to your Java installation run `sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk` (see this [StackOverflow post](https://stackoverflow.com/questions/65601196/how-to-brew-install-java) for context).
   * Re-run `firebase emulator:start` to hopefully see that the start is successful.
-* Once the emulators are running you can interact with the local instance the same as you would production, following the ports/locations specified by the displayed in the terminal. By default, the functions emulator is set to run on `localhost:5001`, creating endpoints at `localhost:5001/act-now-links-dev/central-us1/api`.
+* Once the emulators are running you can interact with the local instance the same as you would production, following the ports/locations specified in the terminal. By default, the functions emulator is set to run on `localhost:5001`, creating endpoints at `localhost:5001/act-now-links-dev/central-us1/api`.
 * The emulator will update whenever the project is built. We can have changes applied on save by running `yarn build:watch` in `functions/` in a separate terminal window.
 
 ### Deploying changes
 
-We don't yet have a system for deploying changes to production. To deploy any changes to your functions, after making sure you're authorized by using `firebase login`, run `yarn deploy`.
+Deploys are handled automatically by the [Firebase functions deploy](https://github.com/covid-projections/act-now-links-service/actions/workflows/functions-deploy.yml) Github action. The workflow is triggered on pushes to the `main` and `develop` branches so that the deployed functions will reflect the most up-to-date changes in `main`/`develop`.
+
+If need be, you can deploy functions yourself by running `yarn deploy` in `functions/`, but this is generally discouraged as it disrupts the symmetry between Github and Firebase.
