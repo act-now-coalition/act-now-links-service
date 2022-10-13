@@ -1,0 +1,38 @@
+name: Firebase functions deploy
+
+env:
+  GIT_BRANCH: ${GITHUB_REF##*/}
+
+on:
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  deploy-functions:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        cd functions
+        yarn global add firebase-tools
+        yarn
+        
+    - name: Build functions
+      run: |
+        yarn build
+        
+    - name: Deploy functions to develop to act-now-links-dev
+      if: ${{ env.GIT_BRANCH }} == 'develop'
+      run: |
+        firebase use act-now-links-dev
+        firebase deploy --token ${{ secrets.FIREBASE_CI_TOKEN }} --only functions
+
+    - name: Deploy functions to develop prod
+      if: ${{ env.GIT_BRANCH }} == 'main'
+      run: |
+        echo "TODO: stand up act-now-links-prod firebase project"
+      
+      
