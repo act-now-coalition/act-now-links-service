@@ -14,14 +14,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install dependencies
+    - name: Install dependencies and build functions
       run: |
         cd functions
         yarn global add firebase-tools
         yarn
-        
-    - name: Build functions
-      run: |
         yarn build
         
     - name: Deploy functions to develop to act-now-links-dev
