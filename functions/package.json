@@ -13,8 +13,8 @@
   "engines": {
     "node": "16"
   },
-  "main": "lib/index.js",
-  "dependencies": {
+  "main": "lib/functions/src/index.js",
+    "dependencies": {
     "@actnowcoalition/assert": "^0.1.1",
     "firebase": "^9.10.0",
     "firebase-admin": "^10.0.2",
