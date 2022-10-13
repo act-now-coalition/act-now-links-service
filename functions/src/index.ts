@@ -33,10 +33,9 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
  *  - description?: string
  */
 app.post("/registerUrl", async (req, res) => {
-  const imageUrl = req.body.imageUrl as string;
-
   const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
-  const documentId = await createUniqueId(urlCollection);
+  const strippedUrlKey = stripProtocolAndSlashes(req.body.url);
+  const documentId = await createUniqueId(urlCollection, strippedUrlKey);
   if (!req.body.url) {
     res.status(400).send("Missing url argument.");
     return;
@@ -44,11 +43,11 @@ app.post("/registerUrl", async (req, res) => {
 
   // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkRegisterParams = {
-    imageUrl: imageUrl ?? "",
+    imageUrl: req.body.imageUrl ?? "",
     url: req.body.url,
     title: req.body.title ?? "",
     description: req.body.description ?? "",
-    strippedUrlKey: stripProtocolAndSlashes(req.body.url),
+    strippedUrlKey: strippedUrlKey,
   };
 
   urlCollection

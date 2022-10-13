@@ -53,9 +53,12 @@ export async function getUrlDocumentDataById(documentId: string) {
  * @returns
  */
 export async function createUniqueId(
-  collection: admin.firestore.CollectionReference
+  collection: admin.firestore.CollectionReference,
+  seed?: string
 ): Promise<string> {
-  const urlHash = crypto.randomBytes(5).toString("hex");
+  const urlHash = seed
+    ? crypto.createHash("sha256").update(seed, "utf8").digest("hex").slice(0, 8)
+    : crypto.randomBytes(4).toString("hex");
   const documentWithHash = await collection.doc(urlHash).get();
   if (documentWithHash.exists) {
     console.log("Hash collision. Generating new hash.");
