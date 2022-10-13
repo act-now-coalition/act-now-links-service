@@ -153,7 +153,8 @@ To get setup:
 * Install firebase tools and CLI: `yarn global add firebase-tools`
 * Login to firebase: `firebase login`, this will open a browser to sign in through in order to give you authentication to interact with the project.
 * Make sure that you are using Node 16
-* `cd functions/ && yarn serve`
+* `cd functions/ && yarn`
+* Run `yarn serve` to start the emulators
 
 ### Running emulators for local development
 
