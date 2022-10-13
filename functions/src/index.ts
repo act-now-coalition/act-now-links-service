@@ -114,15 +114,18 @@ app.get("/:id", (req, res) => {
       const description = data.description ?? "";
       // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
       // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
-      // TODO: Twitter doesn't like meta/og tags? Add twitter card metadata...
       res.status(200).send(
         `<!doctype html>
           <head>
             <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
+            <meta property="og:url" content url="${fullUrl}"/>
+            <meta property="og:title" content="${title}"/>
+            <meta property="og:description" content="${description}"/>
             <meta property="og:image" content="${image}" />
-            <meta property="og:url" content url='${fullUrl}'/>
-            <meta property="og:title" content='${title}'/>
-            <meta property="og:description" content='${description}'/>
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta property="twitter:title" content="${title}"/>
+            <meta property="twitter:description" content="${description}"/>
+            <meta property="twitter:image" content="${image}"/>
           </head>
         </html>`
       );
