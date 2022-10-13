@@ -2,14 +2,12 @@ name: Firebase functions deploy
 
 env:
   # Name of firebase project to deploy to. If on develop, use dev project, if on main use prod.
-  # TODO: We haven't set up the act-now-links-prod project yet,
-  # so for now we'll just deploy to dev no matter what.
-  FIREBASE_PROJECT: ${{ ( github.ref_name == 'main') && 'act-now-links-dev' || 'act-now-links-dev' }}
+  # Production and develop projects are configured in `.firebaserc`
+  FIREBASE_PROJECT: ${{ ( github.ref_name == 'main') && 'production' || 'develop' }}
 
 on:
   push:
     branches: [main, develop]
-  workflow_dispatch:
 
 jobs:
   deploy-functions:
