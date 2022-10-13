@@ -2,13 +2,13 @@ name: Firebase functions deploy
 
 env:
   # Name of firebase project to deploy to. If on develop, use dev project, if on main use prod.
-  # TODO: We haven't set up the act-now-links-prod project yet, 
+  # TODO: We haven't set up the act-now-links-prod project yet,
   # so for now we'll just deploy to dev no matter what.
   FIREBASE_PROJECT: ${{ ( github.ref_name == 'main') && 'act-now-links-dev' || 'act-now-links-dev' }}
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
 
 jobs:
@@ -19,14 +19,13 @@ jobs:
         working-directory: functions
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: yarn global add firebase-tools && yarn install
-        
-    - name: Deploy functions
-      run: |
-        echo "Deploying to ${{ env.FIREBASE_PROJECT }}..."
-        firebase deploy --only functions --project ${{ env.FIREBASE_PROJECT }} --token ${{ secrets.FIREBASE_CI_TOKEN }}
-        echo "Finished deploy to ${{ env.FIREBASE_PROJECT }}."
-      
+      - name: Install dependencies
+        run: yarn global add firebase-tools && yarn install
+
+      - name: Deploy functions
+        run: |
+          echo "Deploying to ${{ env.FIREBASE_PROJECT }}..."
+          firebase deploy --only functions --project ${{ env.FIREBASE_PROJECT }} --token ${{ secrets.FIREBASE_CI_TOKEN }}
+          echo "Finished deploy to ${{ env.FIREBASE_PROJECT }}."
