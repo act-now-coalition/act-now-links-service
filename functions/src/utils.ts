@@ -14,7 +14,6 @@ export type ShareLinkRegisterParams = {
   imageUrl?: string;
   title?: string;
   description?: string;
-  strippedUrlKey: string;
 };
 
 /** Fields found in the firestore share-links collection.  */
@@ -23,7 +22,12 @@ export enum ShareLinksCollection {
   IMAGE_URL = "imageUrl",
   TITLE = "title",
   DESCRIPTION = "description",
-  STRIPPED_URL_KEY = "strippedUrlKey",
+  SHARE_LINK_KEY = "shareLinkKey",
+}
+
+interface DataOrError<T> {
+  data?: T | undefined;
+  error?: string | undefined;
 }
 
 /**
@@ -34,16 +38,22 @@ export enum ShareLinksCollection {
  * @param documentId Shortened url for which to fetch data.
  * @returns Promise containing the data for the given short url.
  */
-export async function getUrlDocumentDataById(documentId: string) {
+export async function getUrlDocumentDataById(
+  documentId: string
+): Promise<DataOrError<ShareLinkRegisterParams>> {
   const db = admin.firestore();
   const querySnapshot = await db
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .doc(documentId)
     .get();
   if (!querySnapshot.exists) {
-    throw new Error(`Document with id ${documentId} doesn't exist`);
+    return {
+      data: undefined,
+      error: `Share link with id ${documentId} does not exist`,
+    };
   }
-  return querySnapshot.data() as ShareLinkRegisterParams;
+  const data = querySnapshot.data() as ShareLinkRegisterParams;
+  return { data: data, error: undefined };
 }
 
 /**
@@ -52,23 +62,12 @@ export async function getUrlDocumentDataById(documentId: string) {
  * @param collection Firestore collection to check for uniqueness
  * @returns
  */
-export async function createUniqueId(
-  collection: admin.firestore.CollectionReference,
+export function createUniqueId(
   seed?: string
-): Promise<string> {
+): string {
   const urlHash = seed
     ? crypto.createHash("sha256").update(seed, "utf8").digest("hex").slice(0, 8)
     : crypto.randomBytes(4).toString("hex");
-  const documentWithHash = await collection.doc(urlHash).get();
-  if (documentWithHash.exists) {
-    console.log("Hash collision. Generating new hash.");
-    return createUniqueId(collection);
-  } else {
-    console.log(`Hash generated: ${urlHash}`);
-    return urlHash;
-  }
-}
-
-export function stripProtocolAndSlashes(url: string): string {
-  return url.replace(/^https?:\/\/?/, "").replace(/\//g, "");
+  console.log(`Hash generated: ${urlHash}`);
+  return urlHash;
 }

@@ -8,7 +8,6 @@ import {
   ShareLinkRegisterParams,
   SHARE_LINK_FIRESTORE_COLLECTION,
   API_BASE_URL,
-  stripProtocolAndSlashes,
   ShareLinksCollection,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
@@ -24,67 +23,48 @@ const runtimeOpts = {
 exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 
 /**
- * Register a new shortened url.
+ * Register a new share link. If a URL is already registered for the given parameters, the existing
+ * share link is returned.
  *
- * Requires a `content-type: application/json` header and a JSON body with the following arguments:
+ * Requires a `content-type: application/json` header and a JSON body with the following parameters:
  *  - url: string
  *  - imageUrl?: string
  *  - title?: string
  *  - description?: string
  */
 app.post("/registerUrl", async (req, res) => {
-  const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
-  const strippedUrlKey = stripProtocolAndSlashes(req.body.url);
-  const documentId = await createUniqueId(urlCollection, strippedUrlKey);
   if (!req.body.url) {
     res.status(400).send("Missing url argument.");
     return;
   }
-
   // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkRegisterParams = {
-    imageUrl: req.body.imageUrl ?? "",
     url: req.body.url,
+    imageUrl: req.body.imageUrl ?? "",
     title: req.body.title ?? "",
     description: req.body.description ?? "",
-    strippedUrlKey: strippedUrlKey,
   };
+  // TODO: `JSON.stringify(data)` should be deterministic given our data, but double check this.
+  const documentId = createUniqueId(JSON.stringify(data));
 
+  const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
   urlCollection
-    .where(ShareLinksCollection.STRIPPED_URL_KEY, "==", data.strippedUrlKey)
+    .doc(documentId)
     .get()
-    .then((querySnapshot) => {
-      // Create a new document if the URL doesn't already have an entry.
-      if (querySnapshot.size === 0) {
+    .then((existingDocument) => {
+      // Return existing document if one already exists for the specified params.
+      if (existingDocument.exists) {
+        res.status(200).send({ url: `${API_BASE_URL}/${existingDocument.id}` });
+      } else {
         urlCollection
           .doc(documentId)
           .set(data)
           .then(() => {
-            res.status(200).send(`${API_BASE_URL}/${documentId}`);
+            res.status(200).send({ url: `${API_BASE_URL}/${documentId}` });
           })
           .catch((err) => {
             res.status(500).send(`error ${JSON.stringify(err)}`);
           });
-      }
-      // Update the existing document if the URL already has an entry.
-      else if (querySnapshot.size >= 1) {
-        const doc = querySnapshot.docs[0];
-        if (!doc.exists) {
-          res
-            .status(500)
-            .send(
-              `error: Document with id ${doc.id} is expected but doesn't exist.`
-            );
-        }
-        doc.ref.update(data).then(() => {
-          res.status(200).send(`${API_BASE_URL}/${doc.id}`);
-        });
-      } else {
-        res
-          .status(500)
-          .send(
-            `error: Unexpected number or documents for URL. Expected 0 or 1, got ${querySnapshot.size}`
-          );
       }
     });
 });
@@ -106,28 +86,33 @@ app.get("/:id", (req, res) => {
   }
 
   getUrlDocumentDataById(shortUrl)
-    .then((data) => {
-      const fullUrl = data.url;
-      const image = data.imageUrl ?? "";
-      const title = data.title ?? "";
-      const description = data.description ?? "";
-      // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
-      // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
-      // TODO: Twitter doesn't like meta/og tags? Add twitter card metadata...
-      res.status(200).send(
-        `<!doctype html>
-          <head>
-            <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
-            <meta property="og:image" content="${image}" />
-            <meta property="og:url" content url='${fullUrl}'/>
-            <meta property="og:title" content='${title}'/>
-            <meta property="og:description" content='${description}'/>
-          </head>
-        </html>`
-      );
+    .then((response) => {
+      if (response.data) {
+        const data = response.data;
+        const fullUrl = data.url;
+        const image = data.imageUrl ?? "";
+        const title = data.title ?? "";
+        const description = data.description ?? "";
+        // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
+        // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
+        // TODO: Twitter doesn't like meta/og tags? Add twitter card metadata...
+        res.status(200).send(
+          `<!doctype html>
+            <head>
+              <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
+              <meta property="og:image" content="${image}" />
+              <meta property="og:url" content url='${fullUrl}'/>
+              <meta property="og:title" content='${title}'/>
+              <meta property="og:description" content='${description}'/>
+            </head>
+          </html>`
+        );
+      } else {
+        res.status(500).send(`Internal Error: ${response.error}`);
+      }
     })
-    .catch((err) => {
-      res.status(500).send(`Internal Error: ${JSON.stringify(err)}`);
+    .catch(() => {
+      res.status(500).send(`Internal Error`);
     });
 });
 
@@ -180,26 +165,26 @@ app.get("/screenshot/:url", async (req, res) => {
 });
 
 /**
- * Retrieves the share link for a given url, if it exists.
+ * Retrieves all the share link for a given url.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/URL_HERE
  *
- * Returns the share link url if it exists, otherwise returns a 404.
  */
-app.get("/getShareLinkUrl/:url", (req, res) => {
+app.get("/shareLinksByUrl/:url", (req, res) => {
   const screenshotUrl = decodeURIComponent(req.params.url);
-  const strippedUrlKey = stripProtocolAndSlashes(screenshotUrl);
   firestoreDb
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
-    .where(ShareLinksCollection.STRIPPED_URL_KEY, "==", strippedUrlKey)
+    .where(ShareLinksCollection.URL, "==", screenshotUrl)
     .get()
     .then((querySnapshot) => {
       if (querySnapshot.size === 0) {
-        res.status(404).send("No share link exists for this URL.");
+        res.status(200).send({ urls: [] });
       } else {
-        const doc = querySnapshot.docs[0];
-        res.status(200).send(`${API_BASE_URL}/${doc.id}`);
+        const docUrls = querySnapshot.docs.map((doc) => {
+          return `${API_BASE_URL}/${doc.id}`;
+        });
+        res.status(200).send({ urls: docUrls });
       }
     })
     .catch((err) => {
