@@ -59,7 +59,7 @@ export async function getUrlDocumentDataById(
 /**
  * Creates a unique id for a document in a given collection.
  *
- * @param collection Firestore collection to check for uniqueness
+ * @param seed Firestore collection to check for uniqueness
  * @returns
  */
 export function createUniqueId(
@@ -70,4 +70,18 @@ export function createUniqueId(
     : crypto.randomBytes(4).toString("hex");
   console.log(`Hash generated: ${urlHash}`);
   return urlHash;
+}
+
+export function stripProtocolAndSlashes(url: string): string {
+  return url.replace(/^https?:\/\/?/, "").replace(/\//g, "");
+}
+
+/** Decode a base64-encoded string.
+ * 
+ * Helper function to replace the deprecated atob() function.
+ * 
+ * @param encodedStr Base64-encoded string to decode.
+*/
+export function decodeBase64String(encodedStr: string): string {
+  return Buffer.from(encodedStr, "base64").toString("ascii");
 }

@@ -9,6 +9,7 @@ import {
   SHARE_LINK_FIRESTORE_COLLECTION,
   API_BASE_URL,
   ShareLinksCollection,
+  decodeBase64String,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
 
@@ -44,7 +45,7 @@ app.post("/registerUrl", async (req, res) => {
     title: req.body.title ?? "",
     description: req.body.description ?? "",
   };
-  // TODO: `JSON.stringify(data)` should be deterministic given our data, but double check this.
+  // TODO: Using `JSON.stringify(data)` should be deterministic given our data, but double check this.
   const documentId = createUniqueId(JSON.stringify(data));
 
   const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
@@ -95,20 +96,23 @@ app.get("/:id", (req, res) => {
         const description = data.description ?? "";
         // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
         // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
-        // TODO: Twitter doesn't like meta/og tags? Add twitter card metadata...
         res.status(200).send(
           `<!doctype html>
             <head>
               <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
+              <meta property="og:url" content url="${fullUrl}"/>
+              <meta property="og:title" content="${title}"/>
+              <meta property="og:description" content="${description}"/>
               <meta property="og:image" content="${image}" />
-              <meta property="og:url" content url='${fullUrl}'/>
-              <meta property="og:title" content='${title}'/>
-              <meta property="og:description" content='${description}'/>
+              <meta name="twitter:card" content="summary_large_image" />
+              <meta property="twitter:title" content="${title}"/>
+              <meta property="twitter:description" content="${description}"/>
+              <meta property="twitter:image" content="${image}"/>
             </head>
           </html>`
         );
       } else {
-        res.status(500).send(`Internal Error: ${response.error}`);
+        res.status(404).send(response.error);
       }
     })
     .catch(() => {
@@ -165,27 +169,23 @@ app.get("/screenshot/:url", async (req, res) => {
 });
 
 /**
- * Retrieves all the share link for a given url.
+ * Retrieves all the share links that exist for a given url.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/URL_HERE
  *
  */
 app.get("/shareLinksByUrl/:url", (req, res) => {
-  const screenshotUrl = decodeURIComponent(req.params.url);
+  const url = decodeBase64String(req.params.url);
   firestoreDb
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
-    .where(ShareLinksCollection.URL, "==", screenshotUrl)
+    .where(ShareLinksCollection.URL, "==", url)
     .get()
     .then((querySnapshot) => {
-      if (querySnapshot.size === 0) {
-        res.status(200).send({ urls: [] });
-      } else {
-        const docUrls = querySnapshot.docs.map((doc) => {
-          return `${API_BASE_URL}/${doc.id}`;
-        });
-        res.status(200).send({ urls: docUrls });
-      }
+      const docUrls = querySnapshot.docs.map(
+        (doc) => `${API_BASE_URL}/${doc.id}`
+      );
+      res.status(200).send({ urls: docUrls });
     })
     .catch((err) => {
       res.status(500).send(`Internal Error: ${JSON.stringify(err)}`);
