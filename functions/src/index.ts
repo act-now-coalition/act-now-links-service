@@ -139,7 +139,7 @@ app.get("/:id", (req, res) => {
  * ```
  */
 app.get("/screenshot/:url", async (req, res) => {
-  const screenshotUrl = decodeURIComponent(req.params.url);
+  const screenshotUrl = decodeBase64String(req.params.url);
   if (!screenshotUrl || screenshotUrl.length === 0) {
     const errorMsg =
       `Missing url query parameter.` +
