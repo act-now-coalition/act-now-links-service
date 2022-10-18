@@ -64,8 +64,8 @@ export async function getUrlDocumentDataById(
 /**
  * Creates a unique id for a document in a given collection.
  *
- * @param seed Firestore collection to check for uniqueness
- * @returns
+ * @param seed String to use as the seed for the unique id.
+ * @returns Eight digit unique id.
  */
 export function createUniqueId(
   seed?: string

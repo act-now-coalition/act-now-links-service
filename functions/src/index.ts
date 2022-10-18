@@ -45,7 +45,7 @@ app.post("/registerUrl", async (req, res) => {
     title: req.body.title ?? "",
     description: req.body.description ?? "",
   };
-  // Using `JSON.stringify(data)` should be deterministic in this case.
+  // `JSON.stringify(data)` should be deterministic in this case.
   // See https://stackoverflow.com/a/43049877
   const documentId = createUniqueId(JSON.stringify(data));
 
@@ -166,7 +166,7 @@ app.get("/screenshot/:url", async (req, res) => {
 });
 
 /**
- * Retrieves all the share links that exist for a given url.
+ * Retrieves all the share links for the supplied url.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/URL_HERE
