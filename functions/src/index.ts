@@ -45,29 +45,25 @@ app.post("/registerUrl", async (req, res) => {
     title: req.body.title ?? "",
     description: req.body.description ?? "",
   };
-  // Using `JSON.stringify(data)` should be deterministic in this case. 
+  // Using `JSON.stringify(data)` should be deterministic in this case.
   // See https://stackoverflow.com/a/43049877
   const documentId = createUniqueId(JSON.stringify(data));
 
-  const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
-  urlCollection
-    .doc(documentId)
-    .get()
-    .then((existingDocument) => {
-      // Return existing document if one already exists for the specified params.
-      if (existingDocument.exists) {
-        res.status(200).send({ url: `${API_BASE_URL}/${existingDocument.id}` });
-      } else {
-        urlCollection
-          .doc(documentId)
-          .set(data)
-          .then(() => {
-            res.status(200).send({ url: `${API_BASE_URL}/${documentId}` });
-          })
-          .catch((err) => {
-            res.status(500).send(`error ${JSON.stringify(err)}`);
-          });
+  getUrlDocumentDataById(documentId)
+    .then((response) => {
+      // If no share link is found for the given params create a new one.
+      if (!response.data) {
+        const urlCollection = firestoreDb.collection(
+          SHARE_LINK_FIRESTORE_COLLECTION
+        );
+        urlCollection.doc(documentId).set(data);
       }
+    })
+    .then(() => {
+      res.status(200).send({ url: `${API_BASE_URL}/${documentId}` });
+    })
+    .catch((err) => {
+      res.status(500).send(`error ${JSON.stringify(err)}`);
     });
 });
 
