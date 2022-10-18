@@ -22,9 +22,14 @@ export enum ShareLinksCollection {
   IMAGE_URL = "imageUrl",
   TITLE = "title",
   DESCRIPTION = "description",
-  SHARE_LINK_KEY = "shareLinkKey",
 }
 
+/**
+ * Used as the result of a function call in order to help propagate errors:
+ *
+ * Data and error are mutually exclusive, data should be set with
+ * the expected data if the function succeeded, error should be set if the function failed.
+ */
 interface DataOrError<T> {
   data?: T | undefined;
   error?: string | undefined;
@@ -70,10 +75,6 @@ export function createUniqueId(
     : crypto.randomBytes(4).toString("hex");
   console.log(`Hash generated: ${urlHash}`);
   return urlHash;
-}
-
-export function stripProtocolAndSlashes(url: string): string {
-  return url.replace(/^https?:\/\/?/, "").replace(/\//g, "");
 }
 
 /** Decode a base64-encoded string.

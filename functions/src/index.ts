@@ -45,7 +45,8 @@ app.post("/registerUrl", async (req, res) => {
     title: req.body.title ?? "",
     description: req.body.description ?? "",
   };
-  // TODO: Using `JSON.stringify(data)` should be deterministic given our data, but double check this.
+  // Using `JSON.stringify(data)` should be deterministic in this case. 
+  // See https://stackoverflow.com/a/43049877
   const documentId = createUniqueId(JSON.stringify(data));
 
   const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
