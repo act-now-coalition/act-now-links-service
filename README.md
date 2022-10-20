@@ -22,7 +22,7 @@ API base URL: `https://us-central1-act-now-links-dev.cloudfunctions.net`
 
 ### Creating a share link
 
-Registers a new share link with meta tags according to the request body params, or returns the existing one if a share link already exists for the supplied parameters, On success, returns the URL of the new or fetched share link.
+Registers a new share link with meta tags according to the request body params, or returns the existing one if a share link already exists for the supplied parameters. On success, returns the URL of the new or existing share link.
 
 #### Request
 
@@ -43,15 +43,14 @@ Registers a new share link with meta tags according to the request body params, 
 
 #### Success response
 
-Returns new or fetched share link for the URL provided with meta tags according to the data params.
+Returns new or existing share link for the URL provided with meta tags according to the data params.
 
 * **Code:** `200 <br />`
 * **Content:** `<share link URL>`
  
 #### Error Response
 
-* **Code:** `500 Internal Server Error <br />`
-* **Code:** `400 Missing url argument. <br />`
+* **Code:** `400 Missing or invalid URL parameter. <br />`
 
 
 #### Example
@@ -71,9 +70,33 @@ Returns new or fetched share link for the URL provided with meta tags according 
 curl -X POST -H "Content-Type:application/json" <baseurl>/api/registerUrl -d @./payload.json
 ```
 
+### Fetching all existing share links for a URL
+
+Returns all the share links with the same URL as the supplied target URL, or an empty
+array if none exist.
+
+#### Request
+
+* URL:  `/api/shareLinksByUrl?url=<target-URL>`
+* Method: `GET`
+
+#### Success Response
+
+Returns all corresponding share links for the URL provided.
+
+* **Code:** `200 <br />`
+* **Content:** `{ urls: [<share links for target URL>] }`
+
+#### Example
+
+```bash
+curl -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl?url=https://www.covidactnow.org"
+```
+
+
 ### Taking a screenshot of a share image page
 
-Generates a screenshot of the given target URL and returns the image. The target URL should be a base64-encoded string, using `btoa(url)` or an equivalent, non-deprecated function (e.g. `Buffer.from(url).toString('base64')`).
+Generates a screenshot of the given target URL and returns the image.
 
 The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` classes to indicate where to capture and when the screenshot is ready to be taken, e.g.:
 
@@ -90,7 +113,7 @@ The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` cl
 
 #### Request
 
-* URL:  `/api/screenshot/<encoded-target-URL>`
+* URL:  `/api/screenshot?url=<target-URL>`
 * Method: `GET`
 
 #### Success Response
@@ -99,43 +122,13 @@ Serves screenshot of targeted URL to request URL.
 
 * **Code:** `200 <br />`
 * **Content:** `<screenshot of target URL as .PNG>`
- 
-#### Error Response
-
-* **Code:** `500 Internal Server Error <br />`
 
 #### Example
 
 ```bash
-wget -O img.png "<baseurl>/api/screenshot/https://covidactnow.org/internal/share-image/states/ma"
+wget -O img.png "<baseurl>/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma"
 ```
 
-### Fetching all existing share links for a URL
-
-If it exists, return the share link with the same URL as the supplied original URL. The original URL should be a base64-encoded string, using `btoa(url)` or an equivalent, non-deprecated function (e.g. `Buffer.from(url).toString('base64')`).
-
-
-#### Request
-
-* URL:  `/api/shareLinksByUrl/<base64-encoded-original-URL>`
-* Method: `GET`
-
-#### Success Response
-
-Returns all corresponding share links for the URL provided.
-
-* **Code:** `200 <br />`
-* **Content:** `{ urls: [<share links for given URL>] }`
-
-#### Error Response
-
-* **Code:** `500 Internal Server Error <br />`
-
-#### Example
-
-```bash
-curl -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/https://www.covidactnow.org"
-```
 
 ## Setup
 

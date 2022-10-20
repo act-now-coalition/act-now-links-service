@@ -4,17 +4,21 @@ import * as express from "express";
 import * as cors from "cors";
 import {
   getUrlDocumentDataById,
+  getUrlDocumentDataByIdStrict,
   createUniqueId,
   ShareLinkRegisterParams,
   SHARE_LINK_FIRESTORE_COLLECTION,
   API_BASE_URL,
   ShareLinksCollection,
-  decodeBase64String,
+  isValidUrl,
+  ResponseType,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
+import { ShareLinkError } from "./error-handling";
 
 admin.initializeApp();
 const firestoreDb = admin.firestore();
+const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
 const app = express();
 app.use(cors({ origin: "*" }));
 const runtimeOpts = {
@@ -33,11 +37,21 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
  *  - title?: string
  *  - description?: string
  */
-app.post("/registerUrl", async (req, res) => {
-  if (!req.body.url) {
-    res.status(400).send("Missing url argument.");
-    return;
+app.post("/registerUrl", (req, res) => {
+  if (!isValidUrl(req.body.url)) {
+    const externalError =
+      "Invalid URL parameter. " +
+      "Please ensure the url provided is valid and includes an http(s) protocol.";
+    const internalError = `${externalError} Got URL: ${req.body.url}`;
+    throw new ShareLinkError(
+      400,
+      res,
+      externalError,
+      internalError,
+      ResponseType.JSON
+    );
   }
+
   // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkRegisterParams = {
     url: req.body.url,
@@ -52,18 +66,23 @@ app.post("/registerUrl", async (req, res) => {
   getUrlDocumentDataById(documentId)
     .then((response) => {
       // If no share link is found for the given params create a new one.
-      if (!response.data) {
-        const urlCollection = firestoreDb.collection(
-          SHARE_LINK_FIRESTORE_COLLECTION
-        );
-        urlCollection.doc(documentId).set(data);
+      if (response === undefined) {
+        return urlCollection.doc(documentId).set(data);
       }
+      return;
     })
     .then(() => {
-      res.status(200).send({ url: `${API_BASE_URL}/${documentId}` });
+      res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
     })
-    .catch((err) => {
-      res.status(500).send(`error ${JSON.stringify(err)}`);
+    .catch((error: Error) => {
+      const externalError = "Unexpected Error.";
+      throw new ShareLinkError(
+        500,
+        res,
+        externalError,
+        error.message,
+        ResponseType.JSON
+      );
     });
 });
 
@@ -73,28 +92,25 @@ app.post("/registerUrl", async (req, res) => {
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/SHORT_URL_HERE
  */
-app.get("/:id", (req, res) => {
-  const shortUrl = req.params.id;
-  if (!shortUrl || shortUrl.length === 0) {
-    const errorMsg =
+app.get("/go/:id", (req, res) => {
+  const documentId = req.params.id;
+  if (!documentId || documentId.length === 0) {
+    const externalError =
       "Missing URL parameter. " +
-      "Expected structure: https://<...>.net/api/SHORT_URL_HERE";
-    res.status(400).send(errorMsg);
-    return;
+      "Expected structure: https://....net/api/go/SHARE_LINK_ID_HERE";
+    throw new ShareLinkError(400, res, externalError);
   }
 
-  getUrlDocumentDataById(shortUrl)
-    .then((response) => {
-      if (response.data) {
-        const data = response.data;
-        const fullUrl = data.url;
-        const image = data.imageUrl ?? "";
-        const title = data.title ?? "";
-        const description = data.description ?? "";
-        // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
-        // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
-        res.status(200).send(
-          `<!doctype html>
+  getUrlDocumentDataByIdStrict(documentId)
+    .then((data) => {
+      const fullUrl = data.url;
+      const image = data.imageUrl ?? "";
+      const title = data.title ?? "";
+      const description = data.description ?? "";
+      // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
+      // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
+      res.status(200).send(
+        `<!doctype html>
             <head>
               <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
               <meta property="og:url" content url="${fullUrl}"/>
@@ -107,13 +123,15 @@ app.get("/:id", (req, res) => {
               <meta property="twitter:image" content="${image}"/>
             </head>
           </html>`
-        );
-      } else {
-        res.status(404).send(response.error);
-      }
+      );
     })
-    .catch(() => {
-      res.status(500).send(`Internal Error`);
+    .catch((error: Error) => {
+      const code = error.message === "No share link found" ? 404 : 500;
+      const externalError =
+        code === 404
+          ? `${error.message} for ID ${documentId}`
+          : "Unexpected Error.";
+      throw new ShareLinkError(code, res, externalError, error.message);
     });
 });
 
@@ -121,7 +139,7 @@ app.get("/:id", (req, res) => {
  * Takes a screenshot of the given url and returns the file.
  *
  * Expected url structure:
- * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot/URL_HERE
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=URL_HERE
  *
  * The target URL must contain divs with 'screenshot' and 'screenshot-ready' classes
  * to indicate where and when the screenshot is ready to be taken.
@@ -135,14 +153,14 @@ app.get("/:id", (req, res) => {
  *  </div>
  * ```
  */
-app.get("/screenshot/:url", async (req, res) => {
-  const screenshotUrl = decodeBase64String(req.params.url);
-  if (!screenshotUrl || screenshotUrl.length === 0) {
-    const errorMsg =
-      `Missing url query parameter.` +
-      `Expected structure: https://<...>.net/api/screenshot/URL_HERE`;
-    res.status(400).send(errorMsg);
-    return;
+app.get("/screenshot", (req, res) => {
+  const screenshotUrl = req.query.url as string;
+  if (!screenshotUrl || !isValidUrl(screenshotUrl)) {
+    const externalError =
+      `Missing or invalid url query parameter.` +
+      `Expected structure: https://<...>.net/api/screenshot?url=URL_HERE`;
+    const internalError = `${externalError}. Got: ${screenshotUrl}`;
+    throw new ShareLinkError(400, res, externalError, internalError);
   }
   // We might have issues with collisions if multiple screenshots are taken at the same time.
   // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
@@ -155,13 +173,10 @@ app.get("/screenshot/:url", async (req, res) => {
 
       res.sendFile(file);
     })
-    .catch((error) => {
-      console.error("Error", error);
-      res
-        .status(500)
-        .send(
-          `<html>Image temporarily not available. Try again later.<br/>Error<br />${error}</html>`
-        );
+    .catch((error: Error) => {
+      const externalError =
+        "Image temporarily not available. Please try again later.";
+      throw new ShareLinkError(500, res, externalError, error.message);
     });
 });
 
@@ -169,22 +184,37 @@ app.get("/screenshot/:url", async (req, res) => {
  * Retrieves all the share links for the supplied url.
  *
  * Expected url structure:
- * https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl/URL_HERE
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=URL_HERE
  *
  */
-app.get("/shareLinksByUrl/:url", (req, res) => {
-  const url = decodeBase64String(req.params.url);
+app.get("/shareLinksByUrl", (req, res) => {
+  const url = req.query.url as string;
+  if (!isValidUrl(url)) {
+    const extError =
+      "Invalid url. Please ensure the url parameter is valid and includes an http(s) protocol.";
+    const intError = `${extError}. Got: ${url}`;
+    throw new ShareLinkError(400, res, extError, intError, ResponseType.JSON);
+  }
   firestoreDb
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .where(ShareLinksCollection.URL, "==", url)
     .get()
     .then((querySnapshot) => {
-      const docUrls = querySnapshot.docs.map(
-        (doc) => `${API_BASE_URL}/${doc.id}`
+      const shareLinks: { [shareLink: string]: ShareLinkRegisterParams } = {};
+      querySnapshot.docs.forEach(
+        (doc) =>
+          (shareLinks[`${API_BASE_URL}/${doc.id}`] =
+            doc.data() as ShareLinkRegisterParams)
       );
-      res.status(200).send({ urls: docUrls });
+      res.status(200).send({ urls: shareLinks });
     })
-    .catch((err) => {
-      res.status(500).send(`Internal Error: ${JSON.stringify(err)}`);
+    .catch((error: Error) => {
+      throw new ShareLinkError(
+        500,
+        res,
+        /*externalError=*/ "Unexpected Error.",
+        error.message,
+        ResponseType.JSON
+      );
     });
 });

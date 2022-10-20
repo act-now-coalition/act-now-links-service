@@ -24,41 +24,54 @@ export enum ShareLinksCollection {
   DESCRIPTION = "description",
 }
 
-/**
- * Used as the result of a function call in order to help propagate errors:
- *
- * Data and error are mutually exclusive, data should be set with
- * the expected data if the function succeeded, error should be set if the function failed.
- */
-interface DataOrError<T> {
-  data?: T | undefined;
-  error?: string | undefined;
+/** Possible API response formats */
+export enum ResponseType {
+  JSON = "application/json",
+  TEXT = "text/html",
 }
 
 /**
  * Fetch corresponding data for a given shortened url from Firestore.
+ * Returns undefined if no document exists for the given id.
  *
- * Firestore urls collection is structured as records indexed by the shortened url.
+ * Firestore urls collection is structured as records indexed by share link ID.
  *
- * @param documentId Shortened url for which to fetch data.
- * @returns Promise containing the data for the given short url.
+ * @param documentId Share link ID for which to fetch data.
+ * @returns Promise containing the data for the given share link ID.
  */
 export async function getUrlDocumentDataById(
   documentId: string
-): Promise<DataOrError<ShareLinkRegisterParams>> {
+): Promise<ShareLinkRegisterParams | undefined> {
   const db = admin.firestore();
   const querySnapshot = await db
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .doc(documentId)
     .get();
   if (!querySnapshot.exists) {
-    return {
-      data: undefined,
-      error: `Share link with id ${documentId} does not exist`,
-    };
+    return undefined;
+  } else {
+    return querySnapshot.data() as ShareLinkRegisterParams;
   }
-  const data = querySnapshot.data() as ShareLinkRegisterParams;
-  return { data: data, error: undefined };
+}
+
+/**
+ * Fetch corresponding data for a given shortened url from Firestore.
+ * Throws an error if no document exists for the given id.
+ *
+ * Firestore urls collection is structured as records indexed by share link ID.
+ *
+ * @param documentId Share link ID for which to fetch data.
+ * @returns Promise containing the data for the given share link ID.
+ */
+export async function getUrlDocumentDataByIdStrict(
+  documentId: string
+): Promise<ShareLinkRegisterParams> {
+  const data = await getUrlDocumentDataById(documentId);
+  if (!data) {
+    const externalError = "No share link found";
+    throw new Error(externalError);
+  }
+  return data;
 }
 
 /**
@@ -67,22 +80,32 @@ export async function getUrlDocumentDataById(
  * @param seed String to use as the seed for the unique id.
  * @returns Eight digit unique id.
  */
-export function createUniqueId(
-  seed?: string
-): string {
+export function createUniqueId(seed?: string): string {
   const urlHash = seed
-    ? crypto.createHash("sha256").update(seed, "utf8").digest("hex").slice(0, 8)
-    : crypto.randomBytes(4).toString("hex");
+    ? crypto
+        .createHash("sha256")
+        .update(seed, "utf8")
+        .digest("base64url")
+        .slice(0, 8)
+    : crypto.randomBytes(4).toString("base64url");
   console.log(`Hash generated: ${urlHash}`);
   return urlHash;
 }
 
-/** Decode a base64-encoded string.
- * 
- * Helper function to replace the deprecated atob() function.
- * 
- * @param encodedStr Base64-encoded string to decode.
-*/
-export function decodeBase64String(encodedStr: string): string {
-  return Buffer.from(encodedStr, "base64").toString("ascii");
+/** Determines whether a string is a valid URL.
+ *
+ * @param urlString String to validate.
+ * @returns True if the string is a valid URL, false otherwise.
+ */
+export function isValidUrl(urlString: string | undefined): boolean {
+  if (!urlString) {
+    return false;
+  }
+  let url;
+  try {
+    url = new URL(urlString);
+  } catch (_) {
+    return false;
+  }
+  return url.protocol === "http:" || url.protocol === "https:";
 }
