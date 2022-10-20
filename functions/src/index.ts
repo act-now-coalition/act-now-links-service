@@ -6,7 +6,7 @@ import {
   getUrlDocumentDataById,
   getUrlDocumentDataByIdStrict,
   createUniqueId,
-  ShareLinkRegisterParams,
+  ShareLinkFields,
   SHARE_LINK_FIRESTORE_COLLECTION,
   API_BASE_URL,
   ShareLinksCollection,
@@ -47,7 +47,7 @@ app.post("/registerUrl", (req, res) => {
   }
 
   // TODO: Better way to handle missing data than coercing to empty strings?
-  const data: ShareLinkRegisterParams = {
+  const data: ShareLinkFields = {
     url: req.body.url,
     imageUrl: req.body.imageUrl ?? "",
     title: req.body.title ?? "",
@@ -148,7 +148,7 @@ app.get("/go/:id", (req, res) => {
  */
 app.get("/screenshot", (req, res) => {
   const screenshotUrl = req.query.url as string;
-  if (!screenshotUrl || !isValidUrl(screenshotUrl)) {
+  if (!isValidUrl(screenshotUrl)) {
     const externalError =
       `Missing or invalid url query parameter.` +
       `Expected structure: https://<...>.net/api/screenshot?url=URL_HERE`;
@@ -174,7 +174,7 @@ app.get("/screenshot", (req, res) => {
 });
 
 /**
- * Retrieves all the share links for the supplied url.
+ * Retrieves all share links for the supplied url.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=URL_HERE
@@ -193,11 +193,11 @@ app.get("/shareLinksByUrl", (req, res) => {
     .where(ShareLinksCollection.URL, "==", url)
     .get()
     .then((querySnapshot) => {
-      const shareLinks: { [shareLink: string]: ShareLinkRegisterParams } = {};
+      const shareLinks: { [shareLink: string]: ShareLinkFields } = {};
       querySnapshot.docs.forEach(
         (doc) =>
           (shareLinks[`${API_BASE_URL}/${doc.id}`] =
-            doc.data() as ShareLinkRegisterParams)
+            doc.data() as ShareLinkFields)
       );
       res.status(200).send({ urls: shareLinks });
     })

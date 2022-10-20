@@ -9,7 +9,7 @@ export const API_BASE_URL = isEmulator
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
 
 /** Request body parameters for /registerUrl API calls. */
-export type ShareLinkRegisterParams = {
+export type ShareLinkFields = {
   url: string;
   imageUrl?: string;
   title?: string;
@@ -41,7 +41,7 @@ export enum ResponseType {
  */
 export async function getUrlDocumentDataById(
   documentId: string
-): Promise<ShareLinkRegisterParams | undefined> {
+): Promise<ShareLinkFields | undefined> {
   const db = admin.firestore();
   const querySnapshot = await db
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
@@ -50,7 +50,7 @@ export async function getUrlDocumentDataById(
   if (!querySnapshot.exists) {
     return undefined;
   } else {
-    return querySnapshot.data() as ShareLinkRegisterParams;
+    return querySnapshot.data() as ShareLinkFields;
   }
 }
 
@@ -65,13 +65,13 @@ export async function getUrlDocumentDataById(
  */
 export async function getUrlDocumentDataByIdStrict(
   documentId: string
-): Promise<ShareLinkRegisterParams> {
+): Promise<ShareLinkFields> {
   const data = await getUrlDocumentDataById(documentId);
   if (!data) {
-    const externalError = "No share link found";
-    throw new Error(externalError);
+    throw new Error("No share link found");
+  } else {
+    return data;
   }
-  return data;
 }
 
 /**
