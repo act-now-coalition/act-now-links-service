@@ -39,17 +39,11 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
  */
 app.post("/registerUrl", (req, res) => {
   if (!isValidUrl(req.body.url)) {
-    const externalError =
+    const extError =
       "Invalid URL parameter. " +
       "Please ensure the url provided is valid and includes an http(s) protocol.";
-    const internalError = `${externalError} Got URL: ${req.body.url}`;
-    throw new ShareLinkError(
-      400,
-      res,
-      externalError,
-      internalError,
-      ResponseType.JSON
-    );
+    const intError = `${extError} Got URL: ${req.body.url}`;
+    throw new ShareLinkError(400, res, extError, intError, ResponseType.JSON);
   }
 
   // TODO: Better way to handle missing data than coercing to empty strings?
@@ -75,11 +69,10 @@ app.post("/registerUrl", (req, res) => {
       res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
     })
     .catch((error: Error) => {
-      const externalError = "Unexpected Error.";
       throw new ShareLinkError(
         500,
         res,
-        externalError,
+        /* externalError= */ "Unexpected Error.",
         error.message,
         ResponseType.JSON
       );
@@ -111,27 +104,27 @@ app.get("/go/:id", (req, res) => {
       // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
       res.status(200).send(
         `<!doctype html>
-            <head>
-              <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
-              <meta property="og:url" content url="${fullUrl}"/>
-              <meta property="og:title" content="${title}"/>
-              <meta property="og:description" content="${description}"/>
-              <meta property="og:image" content="${image}" />
-              <meta name="twitter:card" content="summary_large_image" />
-              <meta property="twitter:title" content="${title}"/>
-              <meta property="twitter:description" content="${description}"/>
-              <meta property="twitter:image" content="${image}"/>
-            </head>
-          </html>`
+          <head>
+            <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
+            <meta property="og:url" content url="${fullUrl}"/>
+            <meta property="og:title" content="${title}"/>
+            <meta property="og:description" content="${description}"/>
+            <meta property="og:image" content="${image}" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta property="twitter:title" content="${title}"/>
+            <meta property="twitter:description" content="${description}"/>
+            <meta property="twitter:image" content="${image}"/>
+          </head>
+        </html>`
       );
     })
     .catch((error: Error) => {
-      const code = error.message === "No share link found" ? 404 : 500;
-      const externalError =
-        code === 404
-          ? `${error.message} for ID ${documentId}`
-          : "Unexpected Error.";
-      throw new ShareLinkError(code, res, externalError, error.message);
+      if (error.message === "No share link found") {
+        const externalMessage = `${error.message} for ID ${documentId}`;
+        throw new ShareLinkError(404, res, externalMessage);
+      } else {
+        throw new ShareLinkError(500, res, "Unexpected Error.", error.message);
+      }
     });
 });
 
@@ -159,7 +152,7 @@ app.get("/screenshot", (req, res) => {
     const externalError =
       `Missing or invalid url query parameter.` +
       `Expected structure: https://<...>.net/api/screenshot?url=URL_HERE`;
-    const internalError = `${externalError}. Got: ${screenshotUrl}`;
+    const internalError = `${externalError}. Got URL: ${screenshotUrl}`;
     throw new ShareLinkError(400, res, externalError, internalError);
   }
   // We might have issues with collisions if multiple screenshots are taken at the same time.
@@ -192,7 +185,7 @@ app.get("/shareLinksByUrl", (req, res) => {
   if (!isValidUrl(url)) {
     const extError =
       "Invalid url. Please ensure the url parameter is valid and includes an http(s) protocol.";
-    const intError = `${extError}. Got: ${url}`;
+    const intError = `${extError}. Got URL: ${url}`;
     throw new ShareLinkError(400, res, extError, intError, ResponseType.JSON);
   }
   firestoreDb
