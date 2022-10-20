@@ -16,7 +16,7 @@ type ShareLinkErrorCode = keyof typeof SHARE_LINK_ERRORS;
  * @param code HTTP status code for the error.
  * @param response Firebase functions response to send external error to.
  * @param external Error message to send to the client. Message should not include error code.
- * @param internal Error message to log to the console. If not provided, externalMessage is used.
+ * @param internal Error or error message to log to the console. If not provided, externalMessage is used.
  * @param responseType Response type to send to the client. Defaults to text/html.
  */
 export class ShareLinkError extends Error {
@@ -24,7 +24,7 @@ export class ShareLinkError extends Error {
     errorCode: ShareLinkErrorCode,
     response: Response<unknown>,
     external: string,
-    internal?: string,
+    internal?: string | Error,
     responseType: ResponseType = ResponseType.TEXT
   ) {
     const errorId = randomUUID();

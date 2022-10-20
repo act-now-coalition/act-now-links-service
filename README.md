@@ -73,7 +73,7 @@ curl -X POST -H "Content-Type:application/json" <baseurl>/api/registerUrl -d @./
 ### Fetching all existing share links for a URL
 
 Returns all the share links with the same URL as the supplied target URL, or an empty
-array if none exist.
+object if none exist.
 
 #### Request
 
@@ -85,7 +85,7 @@ array if none exist.
 Returns all corresponding share links for the URL provided.
 
 * **Code:** `200 <br />`
-* **Content:** `{ urls: [<share links for target URL>] }`
+* **Content:** `{ urls: {share-link-url: {share-link-fields}} }`
 
 #### Example
 

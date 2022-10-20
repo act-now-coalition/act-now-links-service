@@ -69,13 +69,8 @@ app.post("/registerUrl", (req, res) => {
       res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
     })
     .catch((error: Error) => {
-      throw new ShareLinkError(
-        500,
-        res,
-        /* externalError= */ "Unexpected Error.",
-        error.message,
-        ResponseType.JSON
-      );
+      const extError = "Unexpected Error.";
+      throw new ShareLinkError(500, res, extError, error, ResponseType.JSON);
     });
 });
 
@@ -123,7 +118,8 @@ app.get("/go/:id", (req, res) => {
         const externalMessage = `${error.message} for ID ${documentId}`;
         throw new ShareLinkError(404, res, externalMessage);
       } else {
-        throw new ShareLinkError(500, res, "Unexpected Error.", error.message);
+        const externalError = "Unexpected Error.";
+        throw new ShareLinkError(500, res, externalError, error);
       }
     });
 });
@@ -169,7 +165,7 @@ app.get("/screenshot", (req, res) => {
     .catch((error: Error) => {
       const externalError =
         "Image temporarily not available. Please try again later.";
-      throw new ShareLinkError(500, res, externalError, error.message);
+      throw new ShareLinkError(500, res, externalError, error);
     });
 });
 
@@ -202,12 +198,7 @@ app.get("/shareLinksByUrl", (req, res) => {
       res.status(200).send({ urls: shareLinks });
     })
     .catch((error: Error) => {
-      throw new ShareLinkError(
-        500,
-        res,
-        /*externalError=*/ "Unexpected Error.",
-        error.message,
-        ResponseType.JSON
-      );
+      const extError = "Unexpected Error.";
+      throw new ShareLinkError(500, res, extError, error, ResponseType.JSON);
     });
 });
