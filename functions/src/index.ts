@@ -11,10 +11,13 @@ import {
   API_BASE_URL,
   ShareLinksCollection,
   isValidUrl,
-  ResponseType,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
-import { ShareLinkError } from "./error-handling";
+import {
+  ShareLinkError,
+  sendAndThrowUnexpectedError,
+  sendAndThrowInvalidUrlError,
+} from "./error-handling";
 
 admin.initializeApp();
 const firestoreDb = admin.firestore();
@@ -23,7 +26,7 @@ const app = express();
 app.use(cors({ origin: "*" }));
 const runtimeOpts = {
   timeoutSeconds: 90,
-  memory: "1GB" as "1GB", // idk why this casting is necessary?
+  memory: "1GB" as "1GB",
 };
 exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
 
@@ -39,11 +42,7 @@ exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
  */
 app.post("/registerUrl", (req, res) => {
   if (!isValidUrl(req.body.url)) {
-    const extError =
-      "Invalid URL parameter. " +
-      "Please ensure the url provided is valid and includes an http(s) protocol.";
-    const intError = `${extError} Got URL: ${req.body.url}`;
-    throw new ShareLinkError(400, res, extError, intError, ResponseType.JSON);
+    sendAndThrowInvalidUrlError(res, req.body.url);
   }
 
   // TODO: Better way to handle missing data than coercing to empty strings?
@@ -69,8 +68,7 @@ app.post("/registerUrl", (req, res) => {
       res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
     })
     .catch((error: Error) => {
-      const extError = "Unexpected Error.";
-      throw new ShareLinkError(500, res, extError, error, ResponseType.JSON);
+      sendAndThrowUnexpectedError(error, res);
     });
 });
 
@@ -83,10 +81,7 @@ app.post("/registerUrl", (req, res) => {
 app.get("/go/:id", (req, res) => {
   const documentId = req.params.id;
   if (!documentId || documentId.length === 0) {
-    const externalError =
-      "Missing URL parameter. " +
-      "Expected structure: https://....net/api/go/SHARE_LINK_ID_HERE";
-    throw new ShareLinkError(400, res, externalError);
+    sendAndThrowInvalidUrlError(res);
   }
 
   getUrlDocumentDataByIdStrict(documentId)
@@ -114,12 +109,12 @@ app.get("/go/:id", (req, res) => {
       );
     })
     .catch((error: Error) => {
-      if (error.message === "No share link found") {
-        const externalMessage = `${error.message} for ID ${documentId}`;
-        throw new ShareLinkError(404, res, externalMessage);
+      if (error instanceof ShareLinkError) {
+        const url = `${API_BASE_URL}/go/${documentId}`;
+        res.status(error.httpCode).send(`${error.message} URL: ${url}`);
+        throw error;
       } else {
-        const externalError = "Unexpected Error.";
-        throw new ShareLinkError(500, res, externalError, error);
+        sendAndThrowUnexpectedError(error, res);
       }
     });
 });
@@ -145,11 +140,7 @@ app.get("/go/:id", (req, res) => {
 app.get("/screenshot", (req, res) => {
   const screenshotUrl = req.query.url as string;
   if (!isValidUrl(screenshotUrl)) {
-    const externalError =
-      `Missing or invalid url query parameter.` +
-      `Expected structure: https://<...>.net/api/screenshot?url=URL_HERE`;
-    const internalError = `${externalError}. Got URL: ${screenshotUrl}`;
-    throw new ShareLinkError(400, res, externalError, internalError);
+    sendAndThrowInvalidUrlError(res, screenshotUrl);
   }
   // We might have issues with collisions if multiple screenshots are taken at the same time.
   // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
@@ -163,9 +154,7 @@ app.get("/screenshot", (req, res) => {
       res.sendFile(file);
     })
     .catch((error: Error) => {
-      const externalError =
-        "Image temporarily not available. Please try again later.";
-      throw new ShareLinkError(500, res, externalError, error);
+      sendAndThrowUnexpectedError(error, res);
     });
 });
 
@@ -179,10 +168,7 @@ app.get("/screenshot", (req, res) => {
 app.get("/shareLinksByUrl", (req, res) => {
   const url = req.query.url as string;
   if (!isValidUrl(url)) {
-    const extError =
-      "Invalid url. Please ensure the url parameter is valid and includes an http(s) protocol.";
-    const intError = `${extError}. Got URL: ${url}`;
-    throw new ShareLinkError(400, res, extError, intError, ResponseType.JSON);
+    sendAndThrowInvalidUrlError(res, url);
   }
   firestoreDb
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
@@ -198,7 +184,6 @@ app.get("/shareLinksByUrl", (req, res) => {
       res.status(200).send({ urls: shareLinks });
     })
     .catch((error: Error) => {
-      const extError = "Unexpected Error.";
-      throw new ShareLinkError(500, res, extError, error, ResponseType.JSON);
+      sendAndThrowUnexpectedError(error, res);
     });
 });

@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 import * as firebaseSettings from "../../firebase.json";
+import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
 export const API_BASE_URL = isEmulator
@@ -22,12 +23,6 @@ export enum ShareLinksCollection {
   IMAGE_URL = "imageUrl",
   TITLE = "title",
   DESCRIPTION = "description",
-}
-
-/** Possible API response formats */
-export enum ResponseType {
-  JSON = "application/json",
-  TEXT = "text/html",
 }
 
 /**
@@ -68,7 +63,7 @@ export async function getUrlDocumentDataByIdStrict(
 ): Promise<ShareLinkFields> {
   const data = await getUrlDocumentDataById(documentId);
   if (!data) {
-    throw new Error("No share link found");
+    throw new ShareLinkError(ShareLinkErrorCode.URL_NOT_FOUND);
   } else {
     return data;
   }
@@ -87,7 +82,7 @@ export function createUniqueId(seed?: string): string {
         .update(seed, "utf8")
         .digest("base64url")
         .slice(0, 8)
-    : crypto.randomBytes(4).toString("hex");
+    : crypto.randomBytes(6).toString("base64url");
   console.log(`Hash generated: ${urlHash}`);
   return urlHash;
 }

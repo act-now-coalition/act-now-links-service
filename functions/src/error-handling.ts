@@ -1,55 +1,112 @@
-import { randomUUID } from "crypto";
 import { Response } from "firebase-functions";
-import { ResponseType } from "./utils";
-
-const SHARE_LINK_ERRORS = {
-  400: "Invalid Request.",
-  404: "Not Found.",
-  500: "Internal API Failure.",
-};
-type ShareLinkErrorCode = keyof typeof SHARE_LINK_ERRORS;
+import { randomUUID } from "crypto";
 
 /**
- * Custom error handling class for share link API errors to log errors internally
- * and send a user-friendly error message to the client.
- *
- * @param code HTTP status code for the error.
- * @param response Firebase functions response to send external error to.
- * @param external Error message to send to the client. Message should not include error code.
- * @param internal Error or error message to log to the console. If not provided, externalMessage is used.
- * @param responseType Response type to send to the client. Defaults to text/html.
+ * Error wrapper for share link errors. To be used when manually throwing share link errors.
  */
 export class ShareLinkError extends Error {
-  constructor(
-    errorCode: ShareLinkErrorCode,
-    response: Response<unknown>,
-    external: string,
-    internal?: string | Error,
-    responseType: ResponseType = ResponseType.TEXT
-  ) {
-    const errorId = randomUUID();
-    const errorIdText = `If this continues, please reach out to us and reference error ID ${errorId}.`;
+  /** Corresponding http response code of the error. */
+  readonly httpCode: number;
 
-    // Only send the errorId to the client if it's an internal server error.
-    const isServerError = Math.floor(errorCode / 100) * 100 === 500;
-    const externalMessage =
-      `Error ${errorCode}: ${SHARE_LINK_ERRORS[errorCode]} ` +
-      `${external} ${isServerError ? errorIdText : ""}`;
-
-    response
-      .status(errorCode)
-      .send(formatMessage(externalMessage, responseType));
-    super(`Error ID: ${errorId}. ${internal ?? external}`);
+  /**
+   * Construct a new ShareLinkError.
+   *
+   * @param shareLinkErrorCode Share link error code for the error.
+   */
+  constructor(readonly shareLinkErrorCode: ShareLinkErrorCode) {
+    const { message, httpCode } = getShareLinkErrorByCode(shareLinkErrorCode);
+    super(message);
+    this.httpCode = httpCode;
   }
 }
 
-function formatMessage(message: string, responseType: ResponseType) {
-  switch (responseType) {
-    case ResponseType.JSON:
-      return { error: message };
-    case ResponseType.TEXT:
-      return message;
-    default:
-      throw new Error(`Invalid response type: ${responseType}`);
+/**
+ * Possible error codes for share link errors.
+ * Used to look up the corresponding error message and code with getShareLinkErrorByCode().
+ */
+export enum ShareLinkErrorCode {
+  INVALID_URL,
+  URL_NOT_FOUND,
+  UNEXPECTED_ERROR,
+}
+
+interface ShareLinkErrorContent {
+  httpCode: number;
+  message: string;
+}
+
+/**
+ * List of error types for share link errors.
+ */
+const SHARE_LINK_ERRORS: {
+  [shareLinkErrorCode: number]: ShareLinkErrorContent;
+} = {
+  [ShareLinkErrorCode.INVALID_URL]: {
+    httpCode: 400,
+    message: "The provided URL was missing or invalid.",
+  },
+  [ShareLinkErrorCode.URL_NOT_FOUND]: {
+    httpCode: 404,
+    message: "No share links were found for the provided URL.",
+  },
+  [ShareLinkErrorCode.UNEXPECTED_ERROR]: {
+    httpCode: 500,
+    message: `An unexpected error occurred.`,
+  },
+};
+
+/**
+ * Returns the matching share link error object for the given error code.
+ *
+ * Throws an error if no matching error is found.
+ *
+ * @param code ShareLinkErrorCode to retrieve error for.
+ * @returns Share link error object for the given code.
+ */
+function getShareLinkErrorByCode(code: ShareLinkErrorCode) {
+  const error = SHARE_LINK_ERRORS[code];
+  if (!error) {
+    throw new Error("Invalid share link error code.");
+  } else {
+    return error;
   }
+}
+
+/**
+ * Sends an unexpected error response to the client and throws the internal error.
+ *
+ * @param internalError Error object to be logged.
+ * @param res response object to send error to.
+ */
+export function sendAndThrowUnexpectedError(
+  internalError: Error,
+  res: Response
+) {
+  const errorId = randomUUID();
+  const errorIdText =
+    "If this error persists, please contact us and reference error ID: ";
+  const shareLinkError = getShareLinkErrorByCode(
+    ShareLinkErrorCode.UNEXPECTED_ERROR
+  );
+  res
+    .status(shareLinkError.httpCode)
+    .send(`${shareLinkError.message} ${errorIdText}${errorId}`);
+  throw new Error(`${internalError.message} Error ID: ${errorId}`);
+}
+
+/**
+ * Sends an invalid URL error response to the client and throws an internal error.
+ *
+ * @param res response object to send error to.
+ * @param url URL that was invalid.
+ */
+export function sendAndThrowInvalidUrlError(res: Response, url?: string) {
+  const shareLinkError = getShareLinkErrorByCode(
+    ShareLinkErrorCode.INVALID_URL
+  );
+  const urlText = url ? `URL: ${url}` : "";
+  res
+    .status(shareLinkError.httpCode)
+    .send(`${shareLinkError.message} ${urlText}`);
+  throw new Error(`${shareLinkError.message} ${urlText}`);
 }
