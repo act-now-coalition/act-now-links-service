@@ -30,17 +30,10 @@ export enum ShareLinkErrorCode {
   UNEXPECTED_ERROR,
 }
 
-interface ShareLinkErrorContent {
-  httpCode: number;
-  message: string;
-}
-
 /**
  * List of error types for share link errors.
  */
-const SHARE_LINK_ERRORS: {
-  [shareLinkErrorCode: number]: ShareLinkErrorContent;
-} = {
+const SHARE_LINK_ERRORS = {
   [ShareLinkErrorCode.INVALID_URL]: {
     httpCode: 400,
     message: "The provided URL was missing or invalid.",
