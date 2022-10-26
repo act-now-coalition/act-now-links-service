@@ -70,7 +70,7 @@ Returns new or existing share link for the URL provided with meta tags according
 ```
 
 ```bash
-curl -v POST -H "Content-Type:application/json" https://us-central1-act-now-links-dev.cloudfunctions.net/api/registerUrl -d @./payload.json
+curl -v -X POST -H "Content-Type:application/json" https://us-central1-act-now-links-dev.cloudfunctions.net/api/registerUrl -d @./payload.json
 ```
 
 ### Fetching all existing share links for a URL
@@ -93,7 +93,7 @@ Returns all corresponding share links for the URL provided.
 #### Example
 
 ```bash
-curl -v GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=https://www.covidactnow.org"
+curl -v -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=https://www.covidactnow.org"
 ```
 
 
@@ -129,7 +129,7 @@ Serves screenshot of targeted URL to request URL.
 #### Example
 
 ```bash
-curl -v "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
+curl -v -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
 ```
 
 
@@ -173,4 +173,4 @@ If need be, you can deploy functions yourself by running `yarn deploy` in `funct
 
 Insomnia can be used to test, debug, and store requests. To download and install the Insomnia client see https://insomnia.rest/download. 
 
-To work with the Act Now Links Service API in Insomnia, from the Insomnia dashboard select `Create > Import From > File` and select [`functions/insomnia-config.yaml`](./functions/insomnia-config.yaml).
+To work with the Act Now Links Service API in Insomnia, in the `Insomnia > Preferences` menu, under the Data tab, select `Import Data > From File` and load [`functions/insomnia-config.yaml`](./functions/insomnia-config.yaml).
