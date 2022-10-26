@@ -16,6 +16,9 @@ Service to generate sharable links with meta tags and dynamic preview images.
 * [Running emulators for local development](#running-emulators-for-local-development)
 * [Deploying changes](#deploying-changes)
 
+[Insomnia](#insomnia)
+* [Using Insomnia to explore and debug the API](#insomnia)
+
 ## API
 
 API base URL: `https://us-central1-act-now-links-dev.cloudfunctions.net`
@@ -45,7 +48,7 @@ Registers a new share link with meta tags according to the request body params, 
 
 Returns new or existing share link for the URL provided with meta tags according to the data params.
 
-* **Code:** `200 <br />`
+* **Code:** `200`
 * **Content:** `<share link URL>`
  
 #### Error Response
@@ -67,7 +70,7 @@ Returns new or existing share link for the URL provided with meta tags according
 ```
 
 ```bash
-curl -X POST -H "Content-Type:application/json" <baseurl>/api/registerUrl -d @./payload.json
+curl -v POST -H "Content-Type:application/json" https://us-central1-act-now-links-dev.cloudfunctions.net/api/registerUrl -d @./payload.json
 ```
 
 ### Fetching all existing share links for a URL
@@ -84,13 +87,13 @@ object if none exist.
 
 Returns all corresponding share links for the URL provided.
 
-* **Code:** `200 <br />`
-* **Content:** `{ urls: {share-link-url: {share-link-fields}} }`
+* **Code:** `200`
+* **Content:** `{ urls: {share-link-url: { share-link-fields }} }`
 
 #### Example
 
 ```bash
-curl -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/getShareLinkUrl?url=https://www.covidactnow.org"
+curl -v GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=https://www.covidactnow.org"
 ```
 
 
@@ -98,7 +101,7 @@ curl -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/getSha
 
 Generates a screenshot of the given target URL and returns the image.
 
-The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` classes to indicate where to capture and when the screenshot is ready to be taken, e.g.:
+The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` CSS classes to indicate where to capture and when the screenshot is ready to be taken, e.g.:
 
  ```html
 <div class="screenshot">
@@ -120,13 +123,13 @@ The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` cl
 
 Serves screenshot of targeted URL to request URL.
 
-* **Code:** `200 <br />`
+* **Code:** `200`
 * **Content:** `<screenshot of target URL as .PNG>`
 
 #### Example
 
 ```bash
-wget -O img.png "<baseurl>/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma"
+curl -v "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
 ```
 
 
@@ -161,6 +164,13 @@ This project uses Firestore and Functions, so we will only need to configure emu
 
 ### Deploying changes
 
-Deploys are handled automatically by the [Firebase functions deploy](https://github.com/covid-projections/act-now-links-service/actions/workflows/functions-deploy.yml) Github action. The workflow is triggered on pushes to the `main` and `develop` branches so that the deployed functions will reflect the most up-to-date changes in `main`/`develop`.
+Deploys are handled automatically by the [Firebase functions deploy](https://github.com/covid-projections/act-now-links-service/actions/workflows/functions-deploy.yml) Github action. The workflow is triggered on pushes to the `main` and `develop` branches so that the deployed functions will reflect the most up-to-date status of the repository.
 
 If need be, you can deploy functions yourself by running `yarn deploy` in `functions/`, but this is generally discouraged as it disrupts the symmetry between Github and Firebase.
+
+
+## Insomnia
+
+Insomnia can be used to test, debug, and store requests. To download and install the Insomnia client see https://insomnia.rest/download. 
+
+To work with the Act Now Links Service API in Insomnia, from the Insomnia dashboard select `Create > Import From > File` and select [`functions/insomnia-config.yaml`](./functions/insomnia-config.yaml).
