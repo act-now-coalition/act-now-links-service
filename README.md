@@ -171,6 +171,6 @@ If need be, you can deploy functions yourself by running `yarn deploy` in `funct
 
 ## Insomnia
 
-Insomnia can be used to test, debug, and store requests. To download and install the Insomnia client see https://insomnia.rest/download. 
+Insomnia can be used to test, debug, and store requests. To download and install the Insomnia client see https://insomnia.rest/download.
 
-To work with the Act Now Links Service API in Insomnia, in the `Insomnia > Preferences` menu, under the Data tab, select `Import Data > From File` and load [`functions/insomnia-config.yaml`](./functions/insomnia-config.yaml).
+To work with the Act Now Links Service API in Insomnia, go to the main dashboard screen (e.g. by clicking "Insomnia" at the top of the screen) and select `Create > Import From > File` and select [`functions/insomnia-config.yaml`](./functions/insomnia-config.yaml).
