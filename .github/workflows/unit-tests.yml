@@ -16,5 +16,7 @@ jobs:
           node-version: "16"
       - name: Install Dependacies
         run: yarn global add firebase-tools && yarn install
+      - name: Select develop Firebase project
+        run: firebase use develop --token ${{ secrets.FIREBASE_CI_TOKEN }}
       - name: Run tests
-        run: firebase use develop && firebase emulators:exec "yarn test" --token ${{ secrets.FIREBASE_CI_TOKEN }}
+        run: firebase emulators:exec "yarn test" --token ${{ secrets.FIREBASE_CI_TOKEN }}
