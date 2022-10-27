@@ -1,9 +1,8 @@
 import "jest";
 import fetch from "node-fetch";
-import * as firebaseSettings from "../../firebase.json";
+import { API_BASE_URL } from "./utils";
 import { getShareLinkErrorByCode, ShareLinkErrorCode } from "./error-handling";
 
-const API_BASE_URL = `http://localhost:${firebaseSettings.emulators.functions.port}/act-now-links-dev/us-central1/api`;
 const TEST_PAYLOAD = {
   url: "https://www.covidactnow.org",
   title: "Covid Act Now - America's Covid Tracking Dashboard.",
@@ -23,7 +22,7 @@ describe("POST /registerUrl/", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json).toMatchObject({
-      url: `${API_BASE_URL}/go/RQFPCERH`.replace("http://", ""),
+      url: `${API_BASE_URL}/go/RQFPCERH`
     });
   });
 });

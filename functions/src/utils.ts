@@ -5,7 +5,7 @@ import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
 export const API_BASE_URL = isEmulator
-  ? `localhost:${firebaseSettings.emulators.functions.port}/act-now-links-dev/us-central1/api`
+  ? `http://localhost:${firebaseSettings.emulators.functions.port}/act-now-links-dev/us-central1/api`
   : "https://us-central1-act-now-links-dev.cloudfunctions.net/api";
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
 

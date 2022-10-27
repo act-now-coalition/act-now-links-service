@@ -19,4 +19,4 @@ jobs:
       - name: Select develop Firebase project
         run: firebase use develop --token ${{ secrets.FIREBASE_CI_TOKEN }}
       - name: Run tests
-        run: firebase emulators:exec "yarn test" --token ${{ secrets.FIREBASE_CI_TOKEN }}
+        run: FUNCTIONS_EMULATOR=true firebase emulators:exec "yarn test" --token ${{ secrets.FIREBASE_CI_TOKEN }}
