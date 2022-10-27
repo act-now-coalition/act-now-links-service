@@ -1,15 +1,20 @@
 import "jest";
 import fetch from "node-fetch";
-import { API_BASE_URL } from "./utils";
+import { API_BASE_URL, createUniqueId } from "./utils";
 import { getShareLinkErrorByCode, ShareLinkErrorCode } from "./error-handling";
 
 const TEST_PAYLOAD = {
   url: "https://www.covidactnow.org",
+  imageUrl: "https://covidactnow-prod.web.app/share/4047-2795/home.png",
   title: "Covid Act Now - America's Covid Tracking Dashboard.",
   description: "See how Covid is spreading in your community.",
-  imageUrl:
-    "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/map",
 };
+
+beforeAll(() => {
+  if (!process.env.FUNCTIONS_EMULATOR) {
+    throw new Error("Test suite must be run with the Firebase emulator.");
+  }
+});
 
 describe("POST /registerUrl/", () => {
   test("it returns a 200 and creates a share link", async () => {
@@ -18,11 +23,12 @@ describe("POST /registerUrl/", () => {
       body: JSON.stringify(TEST_PAYLOAD),
       headers: { "Content-Type": "application/json" },
     });
+    const expectedId = createUniqueId(JSON.stringify(TEST_PAYLOAD));
+    const json = await response.json();
 
     expect(response.status).toBe(200);
-    const json = await response.json();
     expect(json).toMatchObject({
-      url: `${API_BASE_URL}/go/RQFPCERH`
+      url: `${API_BASE_URL}/go/${expectedId}`,
     });
   });
 });
@@ -37,5 +43,3 @@ describe("GET /go/:id", () => {
     expect(response.status).toBe(notFoundError.httpCode);
   });
 });
-
-// Need an afterAll() to clear the firestore database.

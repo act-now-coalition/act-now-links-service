@@ -20,7 +20,5 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_CI_SERVICE_ACCOUNT }}'
       - name: Install dependencies and create build
         run: yarn global add firebase-tools && yarn install && yarn build
-      - name: Select develop Firebase project
-        run: firebase use develop
-      - name: Run tests
-        run: FUNCTIONS_EMULATOR=true firebase emulators:exec "yarn test"
+      - name: Select Firebase project and run tests
+        run: firebase use develop && yarn test
