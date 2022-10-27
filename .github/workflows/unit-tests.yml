@@ -4,7 +4,7 @@ on:
 
 jobs:
   test:
-    name: Test
+    name: CI tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -15,10 +15,6 @@ jobs:
         with:
           node-version: "16"
       - name: Install Dependacies
-        run: yarn install
-      - name: Test to Firebase
-        uses: w9jds/firebase-action@master
-        with:
-          args: emulators:exec "yarn test"
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
+        run: yarn global add firebase-tools && yarn install
+      - name: Run tests
+        run: firebase emulators:exec "yarn test" --token ${{ secrets.FIREBASE_CI_TOKEN }}
