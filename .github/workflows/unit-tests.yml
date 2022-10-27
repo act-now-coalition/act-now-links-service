@@ -4,7 +4,7 @@ on:
 
 jobs:
   test:
-    name: CI tests
+    name: Run unit tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -14,8 +14,8 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: "16"
-      - name: Install Dependacies
-        run: yarn global add firebase-tools && yarn install
+      - name: Install dependencies and create build
+        run: yarn global add firebase-tools && yarn install && yarn build
       - name: Select develop Firebase project
         run: firebase use develop --token ${{ secrets.FIREBASE_CI_TOKEN }}
       - name: Run tests
