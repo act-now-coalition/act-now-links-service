@@ -56,7 +56,7 @@ const SHARE_LINK_ERRORS = {
  * @param code ShareLinkErrorCode to retrieve error for.
  * @returns Share link error object for the given code.
  */
-function getShareLinkErrorByCode(code: ShareLinkErrorCode) {
+export function getShareLinkErrorByCode(code: ShareLinkErrorCode) {
   const error = SHARE_LINK_ERRORS[code];
   if (!error) {
     throw new Error("Invalid share link error code.");

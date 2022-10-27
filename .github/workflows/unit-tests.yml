@@ -1,0 +1,21 @@
+name: Run unit tests
+on:
+  push:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16'
+      - name: Install Dependacies
+        run: cd functions && yarn install
+      - name: Test to Firebase
+        uses: w9jds/firebase-action@master
+        with:
+          args: emulators:exec --only firestore \"cd functions && yarn test --exit\"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_CI_TOKEN }}
