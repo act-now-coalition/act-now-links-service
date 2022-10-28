@@ -28,6 +28,8 @@ export enum ShareLinkErrorCode {
   INVALID_URL,
   URL_NOT_FOUND,
   UNEXPECTED_ERROR,
+  INVALID_EMAIL,
+  EMAIL_NOT_FOUND,
 }
 
 /**
@@ -46,6 +48,14 @@ const SHARE_LINK_ERRORS = {
     httpCode: 500,
     message: `An unexpected error occurred.`,
   },
+  [ShareLinkErrorCode.INVALID_EMAIL]: {
+    httpCode: 400,
+    message: "Email is invalid or one was not provided.",
+  },
+  [ShareLinkErrorCode.EMAIL_NOT_FOUND]: {
+    httpCode: 400,
+    message: "Email could not be found.",
+  },
 };
 
 /**
@@ -56,7 +66,7 @@ const SHARE_LINK_ERRORS = {
  * @param code ShareLinkErrorCode to retrieve error for.
  * @returns Share link error object for the given code.
  */
-function getShareLinkErrorByCode(code: ShareLinkErrorCode) {
+export function getShareLinkErrorByCode(code: ShareLinkErrorCode) {
   const error = SHARE_LINK_ERRORS[code];
   if (!error) {
     throw new Error("Invalid share link error code.");
