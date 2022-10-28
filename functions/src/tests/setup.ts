@@ -2,7 +2,7 @@ import { TEST_PAYLOAD } from "./utils";
 import * as admin from "firebase-admin";
 import { createUniqueId, SHARE_LINK_FIRESTORE_COLLECTION } from "../utils";
 
-// Test setup run before all tests.
+// Test setup run before tests.
 module.exports = async () => {
   console.log("Setting up tests...");
   if (!process.env.FUNCTIONS_EMULATOR) {

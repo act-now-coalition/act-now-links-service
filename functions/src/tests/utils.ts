@@ -1,8 +1,9 @@
 import "jest";
 import fetch from "node-fetch";
-import { API_BASE_URL, createUniqueId } from "../utils";
+import { API_BASE_URL, createUniqueId, ShareLinkFields } from "../utils";
+import { getShareLinkErrorByCode, ShareLinkErrorCode } from "../error-handling";
 
-export const TEST_PAYLOAD = {
+export const TEST_PAYLOAD: ShareLinkFields = {
   url: "https://www.covidactnow.org",
   imageUrl: "https://covidactnow-prod.web.app/share/4047-2795/home.png",
   title: "Covid Act Now - America's Covid Tracking Dashboard.",
@@ -20,3 +21,11 @@ export async function registerUrl(payload: Record<string, string | undefined>) {
     headers: { "Content-Type": "application/json" },
   });
 }
+
+export const URL_NOT_FOUND_ERROR = getShareLinkErrorByCode(
+  ShareLinkErrorCode.URL_NOT_FOUND
+);
+
+export const INVALID_URL_ERROR = getShareLinkErrorByCode(
+  ShareLinkErrorCode.INVALID_URL
+);
