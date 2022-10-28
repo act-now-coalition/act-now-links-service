@@ -178,7 +178,7 @@ app.get("/shareLinksByUrl", (req, res) => {
       const shareLinks: { [shareLink: string]: ShareLinkFields } = {};
       querySnapshot.docs.forEach(
         (doc) =>
-          (shareLinks[`${API_BASE_URL}/${doc.id}`] =
+          (shareLinks[`${API_BASE_URL}/go/${doc.id}`] =
             doc.data() as ShareLinkFields)
       );
       res.status(200).send({ urls: shareLinks });
