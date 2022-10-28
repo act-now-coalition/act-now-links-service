@@ -26,15 +26,13 @@ describe("POST /registerUrl/", () => {
     expect(json).toMatchObject({ url: TEST_SHARE_LINK_URL });
   });
 
-  test("it returns a 400 error for a missing url.", async () => {
-    const response = await registerUrl({ ...TEST_PAYLOAD, url: undefined });
-    expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
-  });
-
-  test("it returns a 400 error for an invalid url.", async () => {
-    const response = await registerUrl({ ...TEST_PAYLOAD, url: "ftp://bad" });
-    expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
-  });
+  test.each([undefined, "ftp://not-a-valid-url"])(
+    "it returns a 400 error for a missing or invalid url.",
+    async (url) => {
+      const response = await registerUrl({ ...TEST_PAYLOAD, url: url });
+      expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
+    }
+  );
 });
 
 describe("GET /go/:id", () => {
@@ -69,17 +67,14 @@ describe("GET /shareLinksByUrl", () => {
     expect(json).toMatchObject({ urls: {} });
   });
 
-  test("it returns a 400 error for a missing url.", async () => {
-    const url = `${API_BASE_URL}/shareLinksByUrl`;
-    const response = await fetch(url);
-    expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
-  });
-
-  test("it returns a 400 error for an invalid url.", async () => {
-    const url = `${API_BASE_URL}/shareLinksByUrl?url=ftp://bad`;
-    const response = await fetch(url);
-    expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
-  });
+  test.each(["", "?url=ftp://not-a-valid-url"])(
+    "it returns a 400 error for a missing or invalid url.",
+    async (urlParam) => {
+      const url = `${API_BASE_URL}/shareLinksByUrl${urlParam}`;
+      const response = await fetch(url);
+      expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
+    }
+  );
 });
 
 describe("GET /screenshot", () => {
