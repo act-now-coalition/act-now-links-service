@@ -1,6 +1,7 @@
 {
   "projects": {
     "develop": "act-now-links-dev",
-    "production": "act-now-links-dev"
+    "production": "act-now-links-dev",
+    "default": "act-now-links-dev"
   }
 }
