@@ -30,6 +30,7 @@ export enum ShareLinkErrorCode {
   UNEXPECTED_ERROR,
   INVALID_EMAIL,
   EMAIL_NOT_FOUND,
+  INVALID_TOKEN,
 }
 
 /**
@@ -55,6 +56,11 @@ const SHARE_LINK_ERRORS = {
   [ShareLinkErrorCode.EMAIL_NOT_FOUND]: {
     httpCode: 400,
     message: "Email could not be found.",
+  },
+  [ShareLinkErrorCode.INVALID_TOKEN]: {
+    httpCode: 403,
+    message:
+      "Invalid Firebase ID Token. Please verify token is correct and has not expired.",
   },
 };
 

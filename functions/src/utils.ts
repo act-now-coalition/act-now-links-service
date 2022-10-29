@@ -25,10 +25,9 @@ export enum ShareLinksCollection {
   DESCRIPTION = "description",
 }
 
-/**
- * Fetch corresponding data for a given shortened url from Firestore.
- * Returns undefined if no document exists for the given id.
+/** Fetch corresponding data for a given shortened url from Firestore.
  *
+ * Returns undefined if no document exists for the given id.
  * Firestore urls collection is structured as records indexed by share link ID.
  *
  * @param documentId Share link ID for which to fetch data.
@@ -49,10 +48,9 @@ export async function getUrlDocumentDataById(
   }
 }
 
-/**
- * Fetch corresponding data for a given shortened url from Firestore.
- * Throws an error if no document exists for the given id.
+/** Fetch corresponding data for a given shortened url from Firestore.
  *
+ * Throws an error if no document exists for the given id.
  * Firestore urls collection is structured as records indexed by share link ID.
  *
  * @param documentId Share link ID for which to fetch data.
@@ -69,8 +67,7 @@ export async function getUrlDocumentDataByIdStrict(
   }
 }
 
-/**
- * Creates a unique id for a document in a given collection.
+/** Creates a unique id for a document in a given collection.
  *
  * @param seed String to use as the seed for the unique id.
  * @returns Eight digit unique id.
@@ -103,4 +100,41 @@ export function isValidUrl(urlString: string | undefined): boolean {
     return false;
   }
   return url.protocol === "http:" || url.protocol === "https:";
+}
+
+/** Verify a Firebase ID token is valid.
+ *
+ * @param token Firebase ID token to verify.
+ * @returns True if the token is valid, false otherwise.
+ */
+export async function verifyIdToken(token: string | undefined) {
+  // TODO: error handle here and handle undefined token
+  return admin
+    .auth()
+    .verifyIdToken(token ?? "")
+    .then((decodedToken) => {
+      const uid = decodedToken.uid;
+      console.log(`Decoded token for user ${uid}`);
+      return true;
+    })
+    .catch((error) => {
+      throw error;
+    });
+}
+
+/** Coerce a value to a boolean or throw an error if not possible.
+ *
+ * @param value The value to coerce.
+ */
+export function parseBoolean(value: unknown): boolean {
+  if (typeof value === "number" && [0, 1].includes(value)) {
+    return value === 1;
+  }
+  if (
+    typeof value === "string" &&
+    (value.toLowerCase() === "true" || value.toLowerCase() === "false")
+  ) {
+    return value.toLowerCase() === "true";
+  }
+  throw new Error("Invalid boolean value");
 }

@@ -38,8 +38,13 @@ export class APIKeyHandler {
     }
   }
 
-  /** Verify given API exists */
-  async verifyKey(apiKey: string) {
+  /** Verify given API exists
+   *
+   * @param apiKey The API key to verify.
+   * @returns True if the API key exists, false otherwise.
+   */
+  async isValidKey(apiKey: string | undefined) {
+    if (!apiKey) return false;
     const apiKeyDoc = await this.firestoreInstance
       .collection(API_KEY_COLLECTION)
       .where("apiKey", "==", apiKey)
@@ -67,7 +72,7 @@ export class APIKeyHandler {
     if (!emailDoc.exists) {
       throw new ShareLinkError(ShareLinkErrorCode.EMAIL_NOT_FOUND);
     } else {
-      return emailDoc.data()?.apiKey;
+      return emailDoc.data()?.apiKey as string;
     }
   }
 
@@ -77,6 +82,9 @@ export class APIKeyHandler {
    * @param enabled True to enable, false to disable.
    */
   async toggleKey(email: string, enabled: boolean) {
+    if (!EMAIL_REGEX.test(email)) {
+      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
+    }
     const apiKeyDoc = this.firestoreInstance
       .collection(API_KEY_COLLECTION)
       .doc(email);

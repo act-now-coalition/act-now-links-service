@@ -11,6 +11,8 @@ import {
   API_BASE_URL,
   ShareLinksCollection,
   isValidUrl,
+  verifyIdToken,
+  parseBoolean,
 } from "./utils";
 import { takeScreenshot } from "./screenshot";
 import {
@@ -194,7 +196,9 @@ app.get("/shareLinksByUrl", (req, res) => {
 
 /** Create an API key for the given email.
  *
- * If an API key already exists for the given email, it will be returned.
+ * If an API key already exists for the given email it will be returned.
+ *
+ * Requires Bearer authorization token with a valid Firebase ID token.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/createApiKey?email=EMAIL_HERE
@@ -204,9 +208,11 @@ app.post("/createApiKey", (req, res) => {
     res.status(400).send("Email parameter not provided.");
     return;
   }
-  const email = req.body.email as string;
-  apiKeyHandler
-    .createKey(email)
+  const tokenId = req.get("Authorization")?.split("Bearer ")[1];
+  verifyIdToken(tokenId)
+    .then(() => {
+      return apiKeyHandler.createKey(req.body.email as string);
+    })
     .then((apiKey) => {
       res.status(200).send({ apiKey });
     })
@@ -220,13 +226,12 @@ app.post("/createApiKey", (req, res) => {
 
 /** Disable or enable API key for the given email. */
 app.post("/toggleApiKey", (req, res) => {
-  if (req.body.enabled === undefined) {
-    res.status(400).send("Enabled parameter must be provided.");
-    return;
-  }
-  const enabled = req.body.enabled as boolean;
-  apiKeyHandler
-    .toggleKey(req.body.email as string, enabled)
+  const tokenId = req.get("Authorization")?.split("Bearer ")[1];
+  const enabled = parseBoolean(req.body.enabled); // TODO: error handle this or move to API key handler.
+  verifyIdToken(tokenId)
+    .then(() => {
+      apiKeyHandler.toggleKey(req.body.email as string, enabled);
+    })
     .then(() => {
       res.status(200).send(`Success. API key status set to: ${enabled}`);
     })
@@ -240,14 +245,19 @@ app.post("/toggleApiKey", (req, res) => {
 
 /** Retrieve API key for the given email. */
 app.get("/getApiKey", (req, res) => {
+  const tokenId = req.get("Authorization")?.split("Bearer ")[1];
+  // TODO: Choose whether to validate emails here or in the handler, but be consistent.
+  // TODO: Probably want to verify the Bearer token before anything else (applies to other endpoints too).
   const emailError = getShareLinkErrorByCode(ShareLinkErrorCode.INVALID_EMAIL);
-  if (!req.query.email) {
+  if (req.query.email === undefined) {
     res.status(emailError.httpCode).send(emailError.message);
     return;
   }
   const email = req.query.email as string;
-  apiKeyHandler
-    .getKey(email)
+  verifyIdToken(tokenId)
+    .then(() => {
+      return apiKeyHandler.getKey(email);
+    })
     .then((apiKey) => {
       if (apiKey) {
         res.status(200).send({ apiKey });
