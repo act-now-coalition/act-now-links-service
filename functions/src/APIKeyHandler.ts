@@ -38,7 +38,7 @@ export class APIKeyHandler {
     }
   }
 
-  /** Verify given API exists
+  /** Verify given API key exists
    *
    * @param apiKey The API key to verify.
    * @returns True if the API key exists, false otherwise.

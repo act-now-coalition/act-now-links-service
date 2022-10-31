@@ -1,7 +1,10 @@
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 import * as firebaseSettings from "../../firebase.json";
-import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
+import {
+  ShareLinkError,
+  ShareLinkErrorCode,
+} from "./error-handling";
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
 export const API_BASE_URL = isEmulator
@@ -108,17 +111,20 @@ export function isValidUrl(urlString: string | undefined): boolean {
  * @returns True if the token is valid, false otherwise.
  */
 export async function verifyIdToken(token: string | undefined) {
-  // TODO: error handle here and handle undefined token
+  if (!token) {
+    throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
+  }
   return admin
     .auth()
-    .verifyIdToken(token ?? "")
+    .verifyIdToken(token)
     .then((decodedToken) => {
       const uid = decodedToken.uid;
       console.log(`Decoded token for user ${uid}`);
       return true;
     })
     .catch((error) => {
-      throw error;
+      console.error(error);
+      throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
     });
 }
 

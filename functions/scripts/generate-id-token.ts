@@ -1,6 +1,7 @@
 // Fetch a temporary ID Token for an authenticated user.
 import fetch from "node-fetch";
 
+// TODO: Would prefer to use google login auth to avoid having to enter passwords in the console.
 const email = process.argv[2];
 const password = process.argv[3];
 if (!email || !password) {
@@ -8,7 +9,7 @@ if (!email || !password) {
   process.exit(1);
 }
 
-// Firebase Web API is public/non-confidential.
+// Firebase Web API key is public/non-confidential.
 // TODO: Hardcoding to act-now-links-dev for now, but this should be configurable in the future.
 const firebaseWebApiKey = "AIzaSyDRW6y_kxN51ZUNJr43y2Mgd6v8BLu-ih4";
 fetch(

@@ -31,6 +31,7 @@ export enum ShareLinkErrorCode {
   INVALID_EMAIL,
   EMAIL_NOT_FOUND,
   INVALID_TOKEN,
+  INVALID_API_KEY,
 }
 
 /**
@@ -62,6 +63,11 @@ const SHARE_LINK_ERRORS = {
     message:
       "Invalid Firebase ID Token. Please verify token is correct and has not expired.",
   },
+  [ShareLinkErrorCode.INVALID_API_KEY]: {
+    httpCode: 403,
+    message: "Invalid API key. Please verify key is correct " +
+    "or reach out to us to acquire a key.",
+  }
 };
 
 /**
