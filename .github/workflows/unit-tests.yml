@@ -19,6 +19,6 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_CI_SERVICE_ACCOUNT }}'
       - name: Install dependencies and create build
-        run: yarn global add firebase-tools && yarn install && yarn build
+        run: yarn install && yarn build
       - name: Select Firebase project and run tests
-        run: firebase use develop && yarn test
+        run: yarn firebase use develop && yarn test
