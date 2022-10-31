@@ -83,7 +83,6 @@ export function createUniqueId(seed?: string): string {
         .digest("base64url")
         .slice(0, 8)
     : crypto.randomBytes(6).toString("base64url");
-  console.log(`Hash generated: ${urlHash}`);
   return urlHash;
 }
 

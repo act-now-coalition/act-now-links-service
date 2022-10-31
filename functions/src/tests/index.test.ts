@@ -12,7 +12,6 @@ beforeAll(async () => {
   if (!process.env.FUNCTIONS_EMULATOR) {
     throw new Error("Test suite must be run with the Firebase emulator.");
   }
-  console.log("Registering test url.");
   return registerUrl(TEST_PAYLOAD); // Register a share link to test against.
 });
 
