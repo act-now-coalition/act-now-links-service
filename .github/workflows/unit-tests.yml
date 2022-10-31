@@ -11,7 +11,7 @@ jobs:
         working-directory: functions
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
           node-version: "16"
       - name: 'Authenticate to Google Cloud'
@@ -19,6 +19,6 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_CI_SERVICE_ACCOUNT }}'
       - name: Install dependencies and create build
-        run: yarn global add firebase-tools && yarn install && yarn build
-      - name: Select Firebase project and run tests
-        run: firebase use develop && yarn test
+        run: firebase use develop && yarn install && yarn build
+      - name: Run tests
+        run: yarn test
