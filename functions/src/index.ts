@@ -19,7 +19,6 @@ import {
   ShareLinkError,
   sendAndThrowUnexpectedError,
   sendAndThrowInvalidUrlError,
-  getShareLinkErrorByCode,
   ShareLinkErrorCode,
 } from "./error-handling";
 import { APIKeyHandler } from "./APIKeyHandler";
@@ -34,7 +33,7 @@ const runtimeOpts = {
   timeoutSeconds: 90,
   memory: "1GB" as "1GB",
 };
-exports.api = functions.runWith(runtimeOpts).https.onRequest(app);
+export const api = functions.runWith(runtimeOpts).https.onRequest(app);
 
 /** Register a new share link.
  *
@@ -232,7 +231,20 @@ app.post("/auth/createApiKey", (req, res) => {
     });
 });
 
-/** Disable or enable API key for the given email. */
+/** Disable or enable API key for the given email.
+ *
+ * Requires Bearer authorization token with a valid Firebase ID token.
+ *
+ * Requires a `content-type: application/json` header and a JSON body with the following parameters:
+ *  - email: string
+ *  - enabled: string
+ *
+ * When enabled is set to "true" the API key will be enabled,
+ * if set to "false" the API key will be disabled.
+ *
+ * Expected url structure:
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/toggleApiKey
+ */
 app.post("/auth/toggleApiKey", (req, res) => {
   const IdToken = req.get("Authorization")?.split("Bearer ")[1];
   verifyIdToken(IdToken)
@@ -252,32 +264,3 @@ app.post("/auth/toggleApiKey", (req, res) => {
     });
 });
 
-/** Retrieve API key for the given email. */
-app.get("/auth/getApiKey", (req, res) => {
-  const IdToken = req.get("Authorization")?.split("Bearer ")[1];
-  const emailError = getShareLinkErrorByCode(ShareLinkErrorCode.INVALID_EMAIL);
-  verifyIdToken(IdToken)
-    .then(() => {
-      // TODO: Choose whether to validate emails here or in the handler, but be consistent.
-      // TODO: Probably want to verify the Bearer token before anything else (applies to other endpoints too).
-      const email = req.query.email as string;
-      if (req.query.email === undefined) {
-        res.status(emailError.httpCode).send(emailError.message);
-        return;
-      }
-      return apiKeyHandler.getKey(email);
-    })
-    .then((apiKey) => {
-      if (apiKey) {
-        res.status(200).send({ apiKey });
-      } else {
-        res.status(emailError.httpCode).send(emailError.message);
-      }
-    })
-    .catch((error) => {
-      if (error instanceof ShareLinkError) {
-        res.status(error.httpCode).send(error.message);
-        throw error;
-      } else sendAndThrowUnexpectedError(error, res);
-    });
-});

@@ -1,10 +1,7 @@
 import * as crypto from "crypto";
 import * as admin from "firebase-admin";
 import * as firebaseSettings from "../../firebase.json";
-import {
-  ShareLinkError,
-  ShareLinkErrorCode,
-} from "./error-handling";
+import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
 export const API_BASE_URL = isEmulator
@@ -132,6 +129,7 @@ export async function verifyIdToken(token: string | undefined) {
  * @param value The value to coerce.
  */
 export function parseBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
   if (typeof value === "number" && [0, 1].includes(value)) {
     return value === 1;
   }

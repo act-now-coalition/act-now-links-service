@@ -40,7 +40,7 @@ Requires a valid API key. If you do not have a key and would like to register on
 * URL:  `/api/registerUrl`
 * Method: `POST`
 * Headers
-  * Required: `Content-Type:application/json`
+  * Required: `Content-Type: 'application/json'`
 
 ##### Data Parameters
 
@@ -140,6 +140,76 @@ Serves screenshot of targeted URL to request URL.
 ```bash
 curl -v -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
 ```
+
+### Creating a new API key
+
+Registers a new API key for the supplied email address. 
+
+If an API key already exists for the given email, the existing key is returned.
+
+#### Request
+
+* URL:  `/api/auth/createApiKey`
+* Method: `POST`
+* Headers: 
+  * `Content-Type: 'application/json'`
+  * `Authorization: 'Bearer <Firebase ID Token>'`
+
+#### Success Response
+
+Returns a JSON payload with the newly registered or existing API key.
+
+* **Code:** `200`
+* **Content:** `{ "apiKey": <api-key> }`
+
+#### Example
+
+##### `./email.json`
+
+```json
+{
+  "email": "email-to-register@actnowcoalition.org"
+}
+```
+
+```bash
+curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' http://localhost:5001/act-now-links-dev/us-central1/api/auth/createApiKey -d @email.json
+```
+
+### Toggling an API Key
+
+Disables or enables the API key for the given email.
+
+#### Request
+
+* URL:  `/api/auth/toggleApiKey`
+* Method: `POST`
+* Headers: 
+  * `Content-Type: 'application/json'`
+  * `Authorization: 'Bearer <Firebase ID Token>'`
+
+#### Success Response
+
+Serves screenshot of targeted URL to request URL.
+
+* **Code:** `200`
+* **Content:** `Success. API key status set to <true/false>`
+
+#### Example
+
+##### `./data.json`
+
+```json
+{
+  "email": "email-to-toggle@actnowcoalition.org",
+  "enabled": false
+}
+```
+
+```bash
+curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' http://localhost:5001/act-now-links-dev/us-central1/api/auth/toggleApiKey -d @data.json
+```
+
 
 ## Setup
 
