@@ -15,6 +15,13 @@ export const TEST_SHARE_LINK_URL = `${API_BASE_URL}/go/${createUniqueId(
 
 export const TEST_EMAIL = "email@test.com";
 
+/**
+ * Registers a new share link for the given arguments, or returns the existing one.
+ *
+ * @param payload Arguments to register share link with.
+ * @param apiKey API key to use for request.
+ * @returns Response from the registerUrl endpoint.
+ */
 export async function registerUrl(
   payload: Record<string, string | undefined>,
   apiKey: string
@@ -34,7 +41,15 @@ export const INVALID_URL_ERROR = getShareLinkErrorByCode(
   ShareLinkErrorCode.INVALID_URL
 );
 
-export async function getOrRegisterMockUser(
+/**
+ * Registers a Firebase Auth user with the given email and password, and returns
+ * an ID token for the user. If the user already exists, returns an ID token.
+ *
+ * @param email Email to register mock user with.
+ * @param password Password to register mock user with.
+ * @returns Id token for the user.
+ */
+export async function getOrRegisterIdToken(
   email: string,
   password: string
 ): Promise<string> {
@@ -71,7 +86,13 @@ export async function getOrRegisterMockUser(
   }
 }
 
-export async function createOrGetApiKey(
+/**
+ * Retrieves the existing or registers a new API key for the given email.
+ * @param email Email to register API key for.
+ * @param idToken ID token to use for authentication.
+ * @returns The API key.
+ */
+export async function getOrRegisterApiKey(
   email: string,
   idToken: string
 ): Promise<Response> {

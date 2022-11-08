@@ -6,8 +6,8 @@ import {
   URL_NOT_FOUND_ERROR,
   INVALID_URL_ERROR,
   registerUrl,
-  getOrRegisterMockUser,
-  createOrGetApiKey,
+  getOrRegisterIdToken,
+  getOrRegisterApiKey,
   TEST_EMAIL,
 } from "./utils";
 
@@ -17,8 +17,8 @@ beforeAll(async () => {
   if (!process.env.FUNCTIONS_EMULATOR) {
     throw new Error("Test suite must be run with the Firebase emulator.");
   }
-  idToken = await getOrRegisterMockUser(TEST_EMAIL, "password");
-  const apiKeyRes = await createOrGetApiKey(TEST_EMAIL, idToken);
+  idToken = await getOrRegisterIdToken(TEST_EMAIL, "password");
+  const apiKeyRes = await getOrRegisterApiKey(TEST_EMAIL, idToken);
   const apiKeyJson = await apiKeyRes.json();
   apiKey = apiKeyJson.apiKey;
   await registerUrl(TEST_PAYLOAD, apiKey);
@@ -94,13 +94,13 @@ describe("GET /screenshot", () => {
 
 describe("POST /auth/createApiKey", () => {
   test("returns a 200 and expected API key for email with existing key.", async () => {
-    const apiKeyRes = await createOrGetApiKey(TEST_EMAIL, idToken);
+    const apiKeyRes = await getOrRegisterApiKey(TEST_EMAIL, idToken);
     const apiKeyJson = await apiKeyRes.json();
     expect(apiKeyJson.apiKey).toBe(apiKey);
   });
 
   test("returns a 403 if ID token is invalid.", async () => {
-    const res = await createOrGetApiKey(TEST_EMAIL, "not-a-valid-token");
+    const res = await getOrRegisterApiKey(TEST_EMAIL, "not-a-valid-token");
     expect(res.status).toBe(403);
   });
 });
@@ -118,7 +118,7 @@ describe("POST /auth/toggleApiKey", () => {
   };
 
   test("returns a 200 and toggles the API key.", async () => {
-    await createOrGetApiKey("another@email.com", idToken); // create a second API key to toggle
+    await getOrRegisterApiKey("another@email.com", idToken); // create a second API key to toggle
     const res = await toggleApiKey("another@email.com", idToken);
     expect(res.ok).toBe(true);
     expect(await res.text()).toBe("Success. API key status set to false");

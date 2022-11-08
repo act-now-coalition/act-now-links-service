@@ -104,7 +104,7 @@ export function isValidUrl(urlString: string | undefined): boolean {
 /** Verify a Firebase ID token is valid.
  *
  * @param token Firebase ID token to verify.
- * @returns True if the token is valid, false otherwise.
+ * @returns True if the token is valid, throws an error otherwise.
  */
 export async function verifyIdToken(token: string | undefined) {
   if (!token) {
@@ -123,6 +123,7 @@ export async function verifyIdToken(token: string | undefined) {
 /** Coerce a value to a boolean or throw an error if not possible.
  *
  * @param value The value to coerce.
+ * @returns The coerced boolean value.
  */
 export function parseBoolean(value: unknown): boolean {
   if (typeof value === "boolean") return value;

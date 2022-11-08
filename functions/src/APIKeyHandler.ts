@@ -17,7 +17,7 @@ export class APIKeyHandler {
    * @param email The email address to associate with the key.
    * @returns The API key.
    */
-  async createKey(email: string) {
+  async createKey(email: string): Promise<string> {
     if (!EMAIL_REGEX.test(email)) {
       throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
     }
@@ -38,12 +38,12 @@ export class APIKeyHandler {
     }
   }
 
-  /** Verify given API key exists
+  /** Verify given API key exists and is enabled.
    *
    * @param apiKey The API key to verify.
-   * @returns True if the API key exists, false otherwise.
+   * @returns True if the API key exists and is enabled, false otherwise.
    */
-  async isValidKey(apiKey: string | undefined) {
+  async isValidKey(apiKey: string | undefined): Promise<boolean> {
     if (!apiKey) return false;
     const apiKeyDoc = await this.firestoreInstance
       .collection(API_KEY_COLLECTION)
@@ -56,32 +56,13 @@ export class APIKeyHandler {
     }
   }
 
-  /** Fetch the API key for given email.
-   *
-   * @param email The email address to fetch the key for.
-   * @returns The API key.
-   */
-  async getKey(email: string) {
-    if (!EMAIL_REGEX.test(email)) {
-      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
-    }
-    const emailDoc = await this.firestoreInstance
-      .collection(API_KEY_COLLECTION)
-      .doc(email)
-      .get();
-    if (!emailDoc.exists) {
-      throw new ShareLinkError(ShareLinkErrorCode.EMAIL_NOT_FOUND);
-    } else {
-      return emailDoc.data()?.apiKey as string;
-    }
-  }
-
   /** Disable or enable API key for given email.
    *
    * @param email The email of the API key to enable or disable.
    * @param enabled True to enable, false to disable.
+   * @returns True on success.
    */
-  async toggleKey(email: string, enabled: boolean) {
+  async toggleKey(email: string, enabled: boolean): Promise<boolean> {
     if (!EMAIL_REGEX.test(email)) {
       throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
     }
