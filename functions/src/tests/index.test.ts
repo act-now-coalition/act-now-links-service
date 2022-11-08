@@ -117,7 +117,8 @@ describe("POST /auth/toggleApiKey", () => {
     });
   };
   test("returns a 200 and toggles the API key.", async () => {
-    const res = await toggleApiKey(TEST_EMAIL, idToken);
+    await createOrGetApiKey("another@email.com", idToken); // create a second API key to toggle
+    const res = await toggleApiKey("another@email.com", idToken);
     expect(res.ok).toBe(true);
     expect(await res.text()).toBe("Success. API key status set to false");
   });
