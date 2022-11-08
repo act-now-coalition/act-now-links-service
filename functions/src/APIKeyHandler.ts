@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-const API_KEY_COLLECTION = "apiKeys";
+export const API_KEY_COLLECTION = "apiKeys";
 
 /** Class for creating and handling API keys.*/
 export class APIKeyHandler {
@@ -27,7 +27,7 @@ export class APIKeyHandler {
       .doc(email);
     const apiKeyDocData = await apiKeyDoc.get();
     if (apiKeyDocData.exists) {
-      return apiKey;
+      return apiKeyDocData.data()?.apiKey as string;
     } else {
       await apiKeyDoc.set({
         apiKey,
@@ -78,7 +78,7 @@ export class APIKeyHandler {
 
   /** Disable or enable API key for given email.
    *
-   * @param apiKey The API key to enable or disable.
+   * @param email The email of the API key to enable or disable.
    * @param enabled True to enable, false to disable.
    */
   async toggleKey(email: string, enabled: boolean) {

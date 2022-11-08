@@ -3,21 +3,30 @@ import { API_BASE_URL } from "../utils";
 import {
   TEST_PAYLOAD,
   TEST_SHARE_LINK_URL,
-  registerUrl,
-  INVALID_URL_ERROR,
   URL_NOT_FOUND_ERROR,
+  INVALID_URL_ERROR,
+  registerUrl,
+  getOrRegisterMockUser,
+  createOrGetApiKey,
+  TEST_EMAIL,
 } from "./utils";
 
+let idToken: string;
+let apiKey: string;
 beforeAll(async () => {
   if (!process.env.FUNCTIONS_EMULATOR) {
     throw new Error("Test suite must be run with the Firebase emulator.");
   }
-  return registerUrl(TEST_PAYLOAD); // Register a share link to test against.
+  idToken = await getOrRegisterMockUser(TEST_EMAIL, "password");
+  const apiKeyRes = await createOrGetApiKey(TEST_EMAIL, idToken);
+  const apiKeyJson = await apiKeyRes.json();
+  apiKey = apiKeyJson.apiKey;
+  await registerUrl(TEST_PAYLOAD, apiKey);
 });
 
-describe("POST /registerUrl/", () => {
+describe("POST /registerUrl", () => {
   test("returns the existing share link if one already exists with the given params.", async () => {
-    const response = await registerUrl(TEST_PAYLOAD); // Re-register the TEST_PAYLOAD share link.
+    const response = await registerUrl(TEST_PAYLOAD, apiKey); // Re-register the TEST_PAYLOAD share link.
     const json = await response.json();
     expect(response.ok).toBe(true);
     expect(json).toMatchObject({ url: TEST_SHARE_LINK_URL });
@@ -26,7 +35,7 @@ describe("POST /registerUrl/", () => {
   test.each([undefined, "ftp://not-a-valid-url"])(
     "returns a 400 error for a missing or invalid url.",
     async (url) => {
-      const response = await registerUrl({ ...TEST_PAYLOAD, url: url });
+      const response = await registerUrl({ ...TEST_PAYLOAD, url: url }, apiKey);
       expect(response.status).toBe(INVALID_URL_ERROR.httpCode);
     }
   );
@@ -80,5 +89,41 @@ describe("GET /screenshot", () => {
     const imagePage = "https://covidactnow.org/internal/share-image/states/ma";
     const response = await fetch(`${API_BASE_URL}/screenshot?url=${imagePage}`);
     expect(response.ok).toBe(true);
+  });
+});
+
+describe("POST /auth/createApiKey", () => {
+  test("returns a 200 and expected API key for email with existing key.", async () => {
+    const apiKeyRes = await createOrGetApiKey(TEST_EMAIL, idToken);
+    const apiKeyJson = await apiKeyRes.json();
+    expect(apiKeyJson.apiKey).toBe(apiKey);
+  });
+
+  test("returns a 403 if ID token is invalid.", async () => {
+    const res = await createOrGetApiKey(TEST_EMAIL, "not-a-valid-token");
+    expect(res.status).toBe(403);
+  });
+});
+
+describe("POST /auth/toggleApiKey", () => {
+  const toggleApiKey = async (email: string, token: string) => {
+    return await fetch(`${API_BASE_URL}/auth/toggleApiKey`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ email: TEST_EMAIL, enabled: false }),
+    });
+  };
+  test("returns a 200 and toggles the API key.", async () => {
+    const res = await toggleApiKey(TEST_EMAIL, idToken);
+    expect(res.ok).toBe(true);
+    expect(await res.text()).toBe("Success. API key status set to false");
+  });
+
+  test("returns a 403 if ID token is invalid.", async () => {
+    const res = await toggleApiKey(TEST_EMAIL, "not-a-valid-token");
+    expect(res.status).toBe(403);
   });
 });

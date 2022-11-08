@@ -113,11 +113,7 @@ export async function verifyIdToken(token: string | undefined) {
   return admin
     .auth()
     .verifyIdToken(token)
-    .then((decodedToken) => {
-      const uid = decodedToken.uid;
-      console.log(`Decoded token for user ${uid}`);
-      return true;
-    })
+    .then(() => true)
     .catch((error) => {
       console.error(error);
       throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);

@@ -65,9 +65,10 @@ const SHARE_LINK_ERRORS = {
   },
   [ShareLinkErrorCode.INVALID_API_KEY]: {
     httpCode: 403,
-    message: "Invalid API key. Please verify key is correct " +
-    "or reach out to us to acquire a key.",
-  }
+    message:
+      "Invalid API key. Please verify key is correct " +
+      "or reach out to us to acquire a key.",
+  },
 };
 
 /**
