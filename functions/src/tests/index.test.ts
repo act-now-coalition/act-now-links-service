@@ -113,9 +113,10 @@ describe("POST /auth/toggleApiKey", () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ email: TEST_EMAIL, enabled: false }),
+      body: JSON.stringify({ email, enabled: false }),
     });
   };
+
   test("returns a 200 and toggles the API key.", async () => {
     await createOrGetApiKey("another@email.com", idToken); // create a second API key to toggle
     const res = await toggleApiKey("another@email.com", idToken);
