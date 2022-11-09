@@ -1,6 +1,6 @@
 import * as crypto from "crypto";
-import * as admin from "firebase-admin";
 import * as firebaseSettings from "../../firebase.json";
+import { firebaseApp } from "./init";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
@@ -25,7 +25,8 @@ export enum ShareLinksCollection {
   DESCRIPTION = "description",
 }
 
-/** Fetch corresponding data for a given shortened url from Firestore.
+/**
+ * Fetch corresponding data for a given shortened url from Firestore.
  *
  * Returns undefined if no document exists for the given id.
  * Firestore urls collection is structured as records indexed by share link ID.
@@ -36,7 +37,7 @@ export enum ShareLinksCollection {
 export async function getUrlDocumentDataById(
   documentId: string
 ): Promise<ShareLinkFields | undefined> {
-  const db = admin.firestore();
+  const db = firebaseApp.firestore();
   const querySnapshot = await db
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .doc(documentId)
@@ -48,7 +49,8 @@ export async function getUrlDocumentDataById(
   }
 }
 
-/** Fetch corresponding data for a given shortened url from Firestore.
+/**
+ * Fetch corresponding data for a given shortened url from Firestore.
  *
  * Throws an error if no document exists for the given id.
  * Firestore urls collection is structured as records indexed by share link ID.
@@ -67,7 +69,8 @@ export async function getUrlDocumentDataByIdStrict(
   }
 }
 
-/** Creates a unique id for a document in a given collection.
+/**
+ * Creates a unique id for a document in a given collection.
  *
  * @param seed String to use as the seed for the unique id.
  * @returns Eight digit unique id.
@@ -83,7 +86,8 @@ export function createUniqueId(seed?: string): string {
   return urlHash;
 }
 
-/** Determines whether a string is a valid URL.
+/**
+ * Determines whether a string is a valid URL.
  *
  * @param urlString String to validate.
  * @returns True if the string is a valid URL, false otherwise.
@@ -101,7 +105,8 @@ export function isValidUrl(urlString: string | undefined): boolean {
   return url.protocol === "http:" || url.protocol === "https:";
 }
 
-/** Verify a Firebase ID token is valid.
+/**
+ * Verify a Firebase ID token is valid.
  *
  * @param token Firebase ID token to verify.
  * @returns True if the token is valid, throws an error otherwise.
@@ -110,7 +115,7 @@ export async function verifyIdToken(token: string | undefined) {
   if (!token) {
     throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
   }
-  return admin
+  return firebaseApp
     .auth()
     .verifyIdToken(token)
     .then(() => true)
@@ -118,23 +123,4 @@ export async function verifyIdToken(token: string | undefined) {
       console.error(error);
       throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
     });
-}
-
-/** Coerce a value to a boolean or throw an error if not possible.
- *
- * @param value The value to coerce.
- * @returns The coerced boolean value.
- */
-export function parseBoolean(value: unknown): boolean {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number" && [0, 1].includes(value)) {
-    return value === 1;
-  }
-  if (
-    typeof value === "string" &&
-    (value.toLowerCase() === "true" || value.toLowerCase() === "false")
-  ) {
-    return value.toLowerCase() === "true";
-  }
-  throw new Error("Invalid boolean value");
 }

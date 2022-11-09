@@ -105,9 +105,9 @@ describe("POST /auth/createApiKey", () => {
   });
 });
 
-describe("POST /auth/toggleApiKey", () => {
-  const toggleApiKey = async (email: string, token: string) => {
-    return await fetch(`${API_BASE_URL}/auth/toggleApiKey`, {
+describe("POST /auth/modifyApiKey", () => {
+  const modifyApiKey = async (email: string, token: string) => {
+    return await fetch(`${API_BASE_URL}/auth/modifyApiKey`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -119,13 +119,13 @@ describe("POST /auth/toggleApiKey", () => {
 
   test("returns a 200 and toggles the API key.", async () => {
     await getOrRegisterApiKey("another@email.com", idToken); // create a second API key to toggle
-    const res = await toggleApiKey("another@email.com", idToken);
+    const res = await modifyApiKey("another@email.com", idToken);
     expect(res.ok).toBe(true);
     expect(await res.text()).toBe("Success. API key status set to false");
   });
 
   test("returns a 403 if ID token is invalid.", async () => {
-    const res = await toggleApiKey(TEST_EMAIL, "not-a-valid-token");
+    const res = await modifyApiKey(TEST_EMAIL, "not-a-valid-token");
     expect(res.status).toBe(403);
   });
 });

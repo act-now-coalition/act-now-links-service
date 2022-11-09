@@ -1,7 +1,17 @@
 import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
 import * as express from "express";
 import * as cors from "cors";
+import { APIKeyHandler } from "./APIKeyHandler";
+import { takeScreenshot } from "./screenshot";
+import { isAPIKeyAuthorized, isFirebaseAuthorized } from "./auth";
+import { firebaseApp } from "./init";
+import {
+  ShareLinkError,
+  sendAndThrowUnexpectedError,
+  sendAndThrowInvalidUrlError,
+  ShareLinkErrorCode,
+  sendAndThrowShareLinkOrUnexpectedError,
+} from "./error-handling";
 import {
   getUrlDocumentDataById,
   getUrlDocumentDataByIdStrict,
@@ -11,20 +21,9 @@ import {
   API_BASE_URL,
   ShareLinksCollection,
   isValidUrl,
-  verifyIdToken,
-  parseBoolean,
 } from "./utils";
-import { takeScreenshot } from "./screenshot";
-import {
-  ShareLinkError,
-  sendAndThrowUnexpectedError,
-  sendAndThrowInvalidUrlError,
-  ShareLinkErrorCode,
-} from "./error-handling";
-import { APIKeyHandler } from "./APIKeyHandler";
 
-admin.initializeApp();
-const firestoreDb = admin.firestore();
+const firestoreDb = firebaseApp.firestore();
 const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
 const apiKeyHandler = new APIKeyHandler(firestoreDb);
 const app = express();
@@ -35,7 +34,8 @@ const runtimeOpts = {
 };
 export const api = functions.runWith(runtimeOpts).https.onRequest(app);
 
-/** Register a new share link.
+/**
+ * Register a new share link.
  *
  * If a URL is already registered for the given parameters, the existing
  * share link is returned.
@@ -46,7 +46,7 @@ export const api = functions.runWith(runtimeOpts).https.onRequest(app);
  *  - title?: string
  *  - description?: string
  */
-app.post("/registerUrl", (req, res) => {
+app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
   if (!isValidUrl(req.body.url)) {
     sendAndThrowInvalidUrlError(res, req.body.url);
   }
@@ -82,14 +82,12 @@ app.post("/registerUrl", (req, res) => {
       res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
     })
     .catch((error: Error) => {
-      if (error instanceof ShareLinkError) {
-        res.status(error.httpCode).send(error.message);
-        throw error;
-      } else sendAndThrowUnexpectedError(error, res);
+      sendAndThrowShareLinkOrUnexpectedError(error, res);
     });
 });
 
-/** Redirects share link url to original url.
+/**
+ * Redirects share link url to original url.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/SHORT_URL_HERE
@@ -125,17 +123,12 @@ app.get("/go/:id", (req, res) => {
       );
     })
     .catch((error: Error) => {
-      if (error instanceof ShareLinkError) {
-        const url = `${API_BASE_URL}/go/${documentId}`;
-        res.status(error.httpCode).send(`${error.message} URL: ${url}`);
-        throw error;
-      } else {
-        sendAndThrowUnexpectedError(error, res);
-      }
+      sendAndThrowShareLinkOrUnexpectedError(error, res);
     });
 });
 
-/** Takes a screenshot of the given url and returns the file.
+/**
+ * Takes a screenshot of the given url and returns the file.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=URL_HERE
@@ -173,7 +166,8 @@ app.get("/screenshot", (req, res) => {
     });
 });
 
-/** Retrieves all share links for the supplied url.
+/**
+ * Retrieves all share links for the supplied url.
  *
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=URL_HERE
@@ -202,7 +196,8 @@ app.get("/shareLinksByUrl", (req, res) => {
     });
 });
 
-/** Create an API key for the given email.
+/**
+ * Create an API key for the given email.
  *
  * If an API key already exists for the given email it will be returned.
  *
@@ -211,27 +206,22 @@ app.get("/shareLinksByUrl", (req, res) => {
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/createApiKey?email=EMAIL_HERE
  */
-app.post("/auth/createApiKey", (req, res) => {
-  const IdToken = req.get("Authorization")?.split("Bearer ")[1];
-  verifyIdToken(IdToken)
-    .then(() => {
-      if (!req.body.email) {
-        throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
-      }
-      return apiKeyHandler.createKey(req.body.email as string);
-    })
+app.post("/auth/createApiKey", isFirebaseAuthorized, (req, res) => {
+  if (!req.body.email) {
+    throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
+  }
+  return apiKeyHandler
+    .createKey(req.body.email as string)
     .then((apiKey) => {
       res.status(200).send({ apiKey });
     })
     .catch((error: Error) => {
-      if (error instanceof ShareLinkError) {
-        res.status(error.httpCode).send(error.message);
-        throw error;
-      } else sendAndThrowUnexpectedError(error, res);
+      sendAndThrowShareLinkOrUnexpectedError(error, res);
     });
 });
 
-/** Disable or enable API key for the given email.
+/**
+ * Disable or enable API key for the given email.
  *
  * Requires Bearer authorization token with a valid Firebase ID token.
  *
@@ -243,24 +233,22 @@ app.post("/auth/createApiKey", (req, res) => {
  * if set to "false" the API key will be disabled.
  *
  * Expected url structure:
- * https://us-central1-act-now-links-dev.cloudfunctions.net/api/toggleApiKey
+ * https://us-central1-act-now-links-dev.cloudfunctions.net/api/modifyApiKey
  */
-app.post("/auth/toggleApiKey", (req, res) => {
-  const IdToken = req.get("Authorization")?.split("Bearer ")[1];
-  verifyIdToken(IdToken)
-    .then(() => {
-      const enabled = parseBoolean(req.body.enabled);
-      apiKeyHandler.toggleKey(req.body.email as string, enabled);
-      return enabled;
-    })
+app.post("/auth/modifyApiKey", isFirebaseAuthorized, (req, res) => {
+  const enabled = req.body.enabled;
+  console.log(typeof enabled, enabled, "LKJFLJDKFJSD:LFJDL:FJSDLFDSFJD:LKJ:");
+  if (enabled !== true && enabled !== false) {
+    const error = new ShareLinkError(ShareLinkErrorCode.INVALID_ARGUMENT);
+    res.status(error.httpCode).send(error.message);
+    throw error;
+  }
+  apiKeyHandler
+    .modifyKey(req.body.email as string, enabled)
     .then((enabled) => {
       res.status(200).send(`Success. API key status set to ${enabled}`);
     })
     .catch((error) => {
-      if (error instanceof ShareLinkError) {
-        res.status(error.httpCode).send(error.message);
-        throw error;
-      } else sendAndThrowUnexpectedError(error, res);
+      sendAndThrowShareLinkOrUnexpectedError(error, res);
     });
 });
-

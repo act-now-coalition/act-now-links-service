@@ -50,7 +50,7 @@ Requires a valid API key. If you do not have a key and would like to register on
 | `title`   | `string`        | Title meta tag                 | `false` |
 | `description`   | `string`        | Description meta tag  | `false` |
 | `imageUrl`   | `string`        | Url of image to use as image meta tag | `false` |
-| `apiKey`    | `string`      | Valid API key to authorize the request. <br/> Can also be passed a query parameter using `?apiKey=API_KEY_HERE`. | `true` | 
+| `apiKey`    | `string`      | Valid API key to authorize the request. <br/> Can also be passed as a query parameter using `?apiKey=API_KEY_HERE`. | `true` | 
 
 
 #### Success response
@@ -155,6 +155,12 @@ If an API key already exists for the given email, the existing key is returned.
   * `Content-Type: 'application/json'`
   * `Authorization: 'Bearer <Firebase ID Token>'`
 
+##### Data Parameters
+
+|     Parameter      | Data Type | Description | Required |
+| ----------- | ----------- | ---------------| ------------|                 
+| `email`      | `email`      |  Email to register API key for | `true` |
+
 #### Success Response
 
 Returns a JSON payload with the newly registered or existing API key.
@@ -173,24 +179,28 @@ Returns a JSON payload with the newly registered or existing API key.
 ```
 
 ```bash
-curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' http://localhost:5001/act-now-links-dev/us-central1/api/auth/createApiKey -d @email.json
+curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://us-central1-act-now-links-dev.cloudfunctions.net/api/auth/createApiKey -d @email.json
 ```
 
-### Toggling an API Key
+### Modify an API Key
 
 Disables or enables the API key for the given email.
 
 #### Request
 
-* URL:  `/api/auth/toggleApiKey`
+* URL:  `/api/auth/modifyApiKey`
 * Method: `POST`
 * Headers: 
   * `Content-Type: 'application/json'`
   * `Authorization: 'Bearer <Firebase ID Token>'`
 
-#### Success Response
+#### Data Parameters
 
-Serves screenshot of targeted URL to request URL.
+|     Parameter      | Data Type | Description | Required |
+| ----------- | ----------- | ---------------| ------------|                 
+| `email`      | `email`      |  Email of API key to modify | `true` |
+
+#### Success Response
 
 * **Code:** `200`
 * **Content:** `Success. API key status set to <true/false>`
@@ -201,13 +211,13 @@ Serves screenshot of targeted URL to request URL.
 
 ```json
 {
-  "email": "email-to-toggle@actnowcoalition.org",
+  "email": "email-to-modify@actnowcoalition.org",
   "enabled": false
 }
 ```
 
 ```bash
-curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' http://localhost:5001/act-now-links-dev/us-central1/api/auth/toggleApiKey -d @data.json
+curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://us-central1-act-now-links-dev.cloudfunctions.net/api/auth/modifyApiKey -d @data.json
 ```
 
 
@@ -247,7 +257,7 @@ If need be, you can deploy functions yourself by running `yarn deploy` in `funct
 ## Using Firebase ID Tokens
 
 [Firebase ID Tokens](https://firebase.google.com/docs/auth/admin/verify-id-tokens) are short-lived authorization tokens that verify a
-user is an authenticated user of the Firebase project. We use these tokens to authorize users to create, modify, and toggle the persistent API keys used
+user is an authenticated user of the Firebase project. We use these tokens to authorize users to create and modify the persistent API keys used
 for creating share links.
 
 To create an ID Token:

@@ -1,18 +1,20 @@
 import { randomUUID } from "crypto";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
-const EMAIL_REGEX = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+const EMAIL_REGEX = /@/; // Very permissive, allow any string with an @ symbol.
 export const API_KEY_COLLECTION = "apiKeys";
 
 /** Class for creating and handling API keys.*/
 export class APIKeyHandler {
-  /** Construct a new APIKeyHandler.
+  /**
+   * Construct a new APIKeyHandler.
    *
    * @param firestoreInstance Firestore instance to interact with.
    */
   constructor(readonly firestoreInstance: FirebaseFirestore.Firestore) {}
 
-  /** Create and store a new API key, or return the existing one.
+  /**
+   * Create and store a new API key, or return the existing one.
    *
    * @param email The email address to associate with the key.
    * @returns The API key.
@@ -38,7 +40,8 @@ export class APIKeyHandler {
     }
   }
 
-  /** Verify given API key exists and is enabled.
+  /**
+   * Verify given API key exists and is enabled.
    *
    * @param apiKey The API key to verify.
    * @returns True if the API key exists and is enabled, false otherwise.
@@ -56,25 +59,24 @@ export class APIKeyHandler {
     }
   }
 
-  /** Disable or enable API key for given email.
+  /**
+   * Disable or enable API key for given email.
    *
    * @param email The email of the API key to enable or disable.
    * @param enabled True to enable, false to disable.
-   * @returns True on success.
+   * @returns True if key is enabled, false if disabled.
    */
-  async toggleKey(email: string, enabled: boolean): Promise<boolean> {
-    if (!EMAIL_REGEX.test(email)) {
-      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
-    }
+  async modifyKey(email: string, enabled: boolean): Promise<boolean> {
+    console.log("IN TOGGLE KEY", enabled, enabled === true);
     const apiKeyDoc = this.firestoreInstance
       .collection(API_KEY_COLLECTION)
       .doc(email);
     const apiKeyDocData = await apiKeyDoc.get();
     if (apiKeyDocData.exists) {
       await apiKeyDoc.update({ enabled: enabled });
-      return true;
+      return enabled;
     } else {
-      throw new Error(`No API key found for ${email}`);
+      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
     }
   }
 }
