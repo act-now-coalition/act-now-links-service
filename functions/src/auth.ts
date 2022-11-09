@@ -18,7 +18,7 @@ const apiKeyHandler = new APIKeyHandler(firestoreDb);
  * @param res Express response to interact with.
  * @param next Next function.
  */
-export const isAPIKeyAuthorized = function (
+export function isAPIKeyAuthorized(
   req: Request,
   res: Response,
   next: NextFunction
@@ -36,7 +36,7 @@ export const isAPIKeyAuthorized = function (
     .catch((error) => {
       sendAndThrowShareLinkOrUnexpectedError(error, res);
     });
-};
+}
 
 /**
  * Middleware to verify that the request is authorized with a valid Firebase ID token.
@@ -45,7 +45,7 @@ export const isAPIKeyAuthorized = function (
  * @param res Express response to interact with.
  * @param next Next function.
  */
-export const isFirebaseAuthorized = function (
+export function isFirebaseAuthorized(
   req: Request,
   res: Response,
   next: NextFunction
@@ -56,4 +56,4 @@ export const isFirebaseAuthorized = function (
     .catch((error) => {
       sendAndThrowShareLinkOrUnexpectedError(error, res);
     });
-};
+}
