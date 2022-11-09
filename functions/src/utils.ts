@@ -1,6 +1,6 @@
 import * as crypto from "crypto";
-import * as admin from "firebase-admin";
 import * as firebaseSettings from "../../firebase.json";
+import { firebaseApp } from "./init";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
@@ -27,8 +27,8 @@ export enum ShareLinksCollection {
 
 /**
  * Fetch corresponding data for a given shortened url from Firestore.
- * Returns undefined if no document exists for the given id.
  *
+ * Returns undefined if no document exists for the given id.
  * Firestore urls collection is structured as records indexed by share link ID.
  *
  * @param documentId Share link ID for which to fetch data.
@@ -37,7 +37,7 @@ export enum ShareLinksCollection {
 export async function getUrlDocumentDataById(
   documentId: string
 ): Promise<ShareLinkFields | undefined> {
-  const db = admin.firestore();
+  const db = firebaseApp.firestore();
   const querySnapshot = await db
     .collection(SHARE_LINK_FIRESTORE_COLLECTION)
     .doc(documentId)
@@ -51,8 +51,8 @@ export async function getUrlDocumentDataById(
 
 /**
  * Fetch corresponding data for a given shortened url from Firestore.
- * Throws an error if no document exists for the given id.
  *
+ * Throws an error if no document exists for the given id.
  * Firestore urls collection is structured as records indexed by share link ID.
  *
  * @param documentId Share link ID for which to fetch data.
@@ -86,7 +86,8 @@ export function createUniqueId(seed?: string): string {
   return urlHash;
 }
 
-/** Determines whether a string is a valid URL.
+/**
+ * Determines whether a string is a valid URL.
  *
  * @param urlString String to validate.
  * @returns True if the string is a valid URL, false otherwise.
@@ -102,4 +103,24 @@ export function isValidUrl(urlString: string | undefined): boolean {
     return false;
   }
   return url.protocol === "http:" || url.protocol === "https:";
+}
+
+/**
+ * Verify a Firebase ID token is valid.
+ *
+ * @param token Firebase ID token to verify.
+ * @returns True if the token is valid, throws an error otherwise.
+ */
+export async function verifyIdToken(token: string | undefined) {
+  if (!token) {
+    throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
+  }
+  return firebaseApp
+    .auth()
+    .verifyIdToken(token)
+    .then(() => true)
+    .catch((error) => {
+      console.error(error);
+      throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
+    });
 }

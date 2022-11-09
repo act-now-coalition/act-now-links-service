@@ -28,6 +28,11 @@ export enum ShareLinkErrorCode {
   INVALID_URL,
   URL_NOT_FOUND,
   UNEXPECTED_ERROR,
+  INVALID_EMAIL,
+  EMAIL_NOT_FOUND,
+  INVALID_TOKEN,
+  INVALID_API_KEY,
+  INVALID_ARGUMENT,
 }
 
 /**
@@ -45,6 +50,31 @@ const SHARE_LINK_ERRORS = {
   [ShareLinkErrorCode.UNEXPECTED_ERROR]: {
     httpCode: 500,
     message: `An unexpected error occurred.`,
+  },
+  [ShareLinkErrorCode.INVALID_EMAIL]: {
+    httpCode: 400,
+    message: "Email is invalid or one was not provided.",
+  },
+  [ShareLinkErrorCode.EMAIL_NOT_FOUND]: {
+    httpCode: 400,
+    message: "Email could not be found.",
+  },
+  [ShareLinkErrorCode.INVALID_TOKEN]: {
+    httpCode: 403,
+    message:
+      "Invalid Firebase ID Token. Please verify token is correct and has not expired.",
+  },
+  [ShareLinkErrorCode.INVALID_API_KEY]: {
+    httpCode: 403,
+    message:
+      "Invalid or disabled API key. Please verify key is correct " +
+      "or reach out to us to acquire a key.",
+  },
+  [ShareLinkErrorCode.INVALID_ARGUMENT]: {
+    httpCode: 400,
+    message:
+      "Invalid or missing argument in request body." +
+      "Please verify required arguments are present and correct.",
   },
 };
 
@@ -102,4 +132,22 @@ export function sendAndThrowInvalidUrlError(res: Response, url?: string) {
     .status(shareLinkError.httpCode)
     .send(`${shareLinkError.message} ${urlText}`);
   throw new Error(`${shareLinkError.message} ${urlText}`);
+}
+
+/**
+ * Sends the given share link or unexpected error response to the client.
+ *
+ * @param error Error object to be logged.
+ * @param res Response object to send error to.
+ */
+export function sendAndThrowShareLinkOrUnexpectedError(
+  error: Error,
+  res: Response
+) {
+  if (error instanceof ShareLinkError) {
+    res.status(error.httpCode).send(error.message);
+    throw error;
+  } else {
+    sendAndThrowUnexpectedError(error, res);
+  }
 }

@@ -6,7 +6,9 @@
       "firebase-debug.log",
       "firebase-debug.*.log"
     ],
-    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"],
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run build"
+    ],
     "source": "functions"
   },
   "rewrites": [
@@ -27,6 +29,9 @@
     },
     "ui": {
       "enabled": true
+    },
+    "auth": {
+      "port": 9099
     }
   }
 }
