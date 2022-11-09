@@ -9,7 +9,6 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "generate-id-token": "ts-node ./scripts/generate-id-token.ts",
     "test": "FUNCTIONS_EMULATOR=true firebase emulators:exec 'TZ=America/Los_Angeles jest'"
   },
   "engines": {

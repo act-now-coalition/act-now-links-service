@@ -263,7 +263,7 @@ for creating share links.
 To create an ID Token:
  - Before creating your first ID token, go to the Authentication section of the `act-now-links-dev` Firebase project.
     - Under the `Users` tab, select `Add User`. Enter your email and create a new password for yourself. We will use this login to generate new tokens.
-- Navigate to the `functions/` directory and run `yarn generate-id-token <email> <password>`. This will return an ID token that is valid for the next hour.
+- Navigate to the `act-now-links-service/` directory and run `yarn generate-id-token <email> <password>`. This will return an ID token that is valid for the next hour.
 
 
 
