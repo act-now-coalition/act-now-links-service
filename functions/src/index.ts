@@ -50,8 +50,6 @@ app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
   if (!isValidUrl(req.body.url)) {
     sendAndThrowInvalidUrlError(res, req.body.url);
   }
-  const apiKey = (req.query.apiKey as string) || (req.body.apiKey as string);
-
   // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkFields = {
     url: req.body.url,
@@ -62,15 +60,7 @@ app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
   // `JSON.stringify(data)` should be deterministic in this case.
   // See https://stackoverflow.com/a/43049877
   const documentId = createUniqueId(JSON.stringify(data));
-
-  apiKeyHandler
-    .isValidKey(apiKey)
-    .then((isValid) => {
-      if (!isValid) {
-        throw new ShareLinkError(ShareLinkErrorCode.INVALID_API_KEY);
-      }
-      return getUrlDocumentDataById(documentId);
-    })
+  getUrlDocumentDataById(documentId)
     .then((response) => {
       // If no share link is found for the given params create a new one.
       if (response === undefined) {
@@ -237,7 +227,6 @@ app.post("/auth/createApiKey", isFirebaseAuthorized, (req, res) => {
  */
 app.post("/auth/modifyApiKey", isFirebaseAuthorized, (req, res) => {
   const enabled = req.body.enabled;
-  console.log(typeof enabled, enabled, "LKJFLJDKFJSD:LFJDL:FJSDLFDSFJD:LKJ:");
   if (enabled !== true && enabled !== false) {
     const error = new ShareLinkError(ShareLinkErrorCode.INVALID_ARGUMENT);
     res.status(error.httpCode).send(error.message);

@@ -67,7 +67,6 @@ export class APIKeyHandler {
    * @returns True if key is enabled, false if disabled.
    */
   async modifyKey(email: string, enabled: boolean): Promise<boolean> {
-    console.log("IN TOGGLE KEY", enabled, enabled === true);
     const apiKeyDoc = this.firestoreInstance
       .collection(API_KEY_COLLECTION)
       .doc(email);

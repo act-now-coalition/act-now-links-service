@@ -23,7 +23,7 @@ export const isAPIKeyAuthorized = function (
   res: Response,
   next: NextFunction
 ) {
-  const apiKey = req.query.apiKey as string;
+  const apiKey = (req.query.apiKey as string) || (req.body.apiKey as string);
   return apiKeyHandler
     .isValidKey(apiKey)
     .then((isValid) => {
