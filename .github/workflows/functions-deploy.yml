@@ -1,23 +1,20 @@
 name: Firebase functions deploy
 
-env:
-  # Name of firebase project to deploy to. If on develop, use dev project, if on main use prod.
-  # Production and develop projects are configured in `.firebaserc`
-  FIREBASE_PROJECT: ${{ ( github.ref_name == 'smcclure17/prod-instance') && 'production' || 'develop' }}
-
 on:
   push:
     branches: [smcclure17/prod-instance, develop]
   workflow_dispatch:
 
+# Choose Github environment to use. 
+# See: https://www.codewrecks.com/post/github/choose-environment-from-branch/
 jobs:
   decipher-environment:
     runs-on: ubuntu-latest
     steps:
-    - name: Some check on branch
-      id: branch_check
+    - name: Choose production or develop environment based on branch.
+      id: environment_check
       run: |
-        echo "Running on branch ${{ github.ref }}"
+        echo "Running on branch ${{ github.ref_name }}"
         if [ "${{ github.ref_name }}" = "smcclure17/prod-instance" ]; then
           echo "::set-output name=env_name::production"
         elif [ "${{ github.ref_name }}" = "develop" ]; then
@@ -25,18 +22,17 @@ jobs:
         else
             echo "Invalid branch name" && exit 1
         fi
-        
-    - name: Use variable setup in previous step
-      run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
-    
+    - run: echo "Using variable ${{ steps.environment_check.outputs.env_name }}"
     outputs:
       env_name: ${{ steps.branch_check.outputs.env_name }}
 
   deploy-functions:
     needs: [decipher-environment]
     runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT_NAME: ${{ needs.decipher-environment.outputs.env_name }}
     environment: 
-      name: ${{ needs.decipher-environment.outputs.env_name }}
+      name: ${{ env.ENVIRONMENT_NAME }}
     defaults:
       run:
         working-directory: functions
@@ -50,6 +46,6 @@ jobs:
         run: yarn global add firebase-tools && yarn install
       - name: Deploy functions
         run: |
-          echo "Deploying to ${{ env.FIREBASE_PROJECT }}..."
-          firebase deploy --only functions --project ${{ env.FIREBASE_PROJECT }}
-          echo "Finished deploy to ${{ env.FIREBASE_PROJECT }}."
+          echo "Deploying to ${{ env.ENVIRONMENT_NAME }}..."
+          firebase deploy --only functions --project ${{ env.ENVIRONMENT_NAME }}
+          echo "Finished deploy to ${{ env.ENVIRONMENT_NAME }}."
