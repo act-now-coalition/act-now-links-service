@@ -18,10 +18,13 @@ jobs:
       id: branch_check
       run: |
         echo "Running on branch ${{ github.ref }}"
-        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+        if [ "${{ github.ref_name }}" = "smcclure17/prod-instance" ]; then
           echo "::set-output name=env_name::production"
-        elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+        elif [ "${{ github.ref_name }}" = "develop" ]; then
           echo "::set-output name=env_name::develop"
+        else
+            echo "Invalid branch name" && exit 1
+        fi
         
     - name: Use variable setup in previous step
       run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
