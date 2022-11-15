@@ -1,5 +1,10 @@
 name: Firebase functions deploy
 
+env:
+  # Name of firebase project to deploy to. If on develop, use dev project, if on main use prod.
+  # Production and develop projects are configured in `.firebaserc`
+  FIREBASE_PROJECT: ${{ ( github.ref_name == 'smcclure17/prod-instance') && 'production' || 'develop' }}
+
 on:
   push:
     branches: [smcclure17/prod-instance, develop]
@@ -10,7 +15,7 @@ on:
 # Github environment and Firebase project names must match 1:1, with a valid service account
 # key in the repository secrets labeled FIREBASE_SERVICE_ACCOUNT.
 jobs:
-  decipher-environment:
+  get-environment:
     runs-on: ubuntu-latest
     steps:
     - name: Choose production or develop environment based on branch.
@@ -29,10 +34,10 @@ jobs:
       env_name: ${{ steps.branch_check.outputs.env_name }}
 
   deploy-functions:
-    needs: [decipher-environment]
+    needs: [get-environment]
     runs-on: ubuntu-latest
     environment: 
-      name: ${{ needs.decipher-environment.outputs.env_name }}
+      name: ${{ needs.get-environment.outputs.env_name }}
     defaults:
       run:
         working-directory: functions
@@ -46,6 +51,6 @@ jobs:
         run: yarn global add firebase-tools && yarn install
       - name: Deploy functions
         run: |
-          echo "Deploying to ${{ needs.decipher-environment.outputs.env_name }}..."
-          firebase deploy --only functions --project ${{ needs.decipher-environment.outputs.env_name }}
-          echo "Finished deploy to ${{ needs.decipher-environment.outputs.env_name }}."
+          echo "Deploying to ${{ env.FIREBASE_PROJECT }}..."
+          firebase deploy --only functions --project ${{ env.FIREBASE_PROJECT }}
+          echo "Finished deploy to ${{ env.FIREBASE_PROJECT }}."
