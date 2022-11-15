@@ -261,9 +261,9 @@ user is an authenticated user of the Firebase project. We use these tokens to au
 for creating share links.
 
 To create an ID Token:
- - Before creating your first ID token, go to the Authentication section of the `act-now-links-dev` Firebase project.
+ - Before creating your first ID token, go to the Authentication section of the `act-now-links-dev` or `act-now-links-prod` Firebase project.
     - Under the `Users` tab, select `Add User`. Enter your email and create a new password for yourself. We will use this login to generate new tokens.
-- Navigate to the `act-now-links-service/` directory and run `yarn generate-id-token <email> <password>`. This will return an ID token that is valid for the next hour.
+- Navigate to the `act-now-links-service/` directory and run `yarn generate-id-token <email> <password> <projectId>`. For `projectId`, use `develop` for `act-now-links-dev` and `production` for `act-now-links-prod`. This will return an ID token that is valid for the next hour for the specified project.
 
 
 
