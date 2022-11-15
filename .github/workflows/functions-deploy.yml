@@ -23,7 +23,7 @@ jobs:
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
-          credentials_json: '${{ secrets.FIREBASE_CI_SERVICE_ACCOUNT }}'
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       - name: Install dependencies
         run: yarn global add firebase-tools && yarn install
       - name: Deploy functions
