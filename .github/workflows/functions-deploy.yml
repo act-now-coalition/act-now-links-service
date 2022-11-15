@@ -3,17 +3,18 @@ name: Firebase functions deploy
 env:
   # Name of firebase project to deploy to. If on develop, use dev project, if on main use prod.
   # Production and develop projects are configured in `.firebaserc`
-  FIREBASE_PROJECT: ${{ ( github.ref_name == 'main') && 'production' || 'develop' }}
+  FIREBASE_PROJECT: ${{ ( github.ref_name == 'smcclure17/prod-instance') && 'production' || 'develop' }}
 
 on:
   push:
-    branches: [main, develop]
+    branches: [smcclure17/prod-instance, develop]
+  workflow_dispatch:
 
 jobs:
   deploy-functions:
     runs-on: ubuntu-latest
     environment: 
-      name: '${{ env.FIREBASE_PROJECT }}'
+      name: production
     defaults:
       run:
         working-directory: functions
