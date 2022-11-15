@@ -23,9 +23,9 @@ jobs:
       run: |
         echo "Running on branch ${{ github.ref_name }}"
         if [ "${{ github.ref_name }}" = "smcclure17/prod-instance" ]; then
-          echo "::set-output name=env_name::production"
+          echo echo "{env_name}={production}" >> $GITHUB_OUTPUT
         elif [ "${{ github.ref_name }}" = "develop" ]; then
-          echo "::set-output name=env_name::develop"
+          echo echo "{env_name}={develop}" >> $GITHUB_OUTPUT
         else
             echo "Invalid branch name" && exit 1
         fi
