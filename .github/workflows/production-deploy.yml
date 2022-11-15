@@ -2,12 +2,12 @@ name: Production Firebase functions deploy
 
 on:
   push:
-    branches: [smcclure17/prod-instance]
+    branches: [main]
 
 jobs:
   deploy-functions:
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: production
     defaults:
       run:
