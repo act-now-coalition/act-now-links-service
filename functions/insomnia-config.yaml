@@ -1,0 +1,151 @@
+# Insomnia config file for Act Now Links Service API
+# Learn more about Insomnia at https://github.com/Kong/insomnia
+
+_type: export
+__export_format: 4
+__export_date: 2022-10-26T15:15:20.120Z
+__export_source: insomnia.desktop.app:v2022.6.0
+resources:
+  - _id: req_ad5b4fb3e82e4abbbb72aad972528104
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666797300449
+    created: 1666792504934
+    url: "{{ _.baseUrl }}/registerUrl"
+    name: registerUrl with dynamic share image
+    description: ""
+    method: POST
+    body:
+      mimeType: application/json
+      text: >-
+        {
+        	"url": "https://www.covidactnow.org",
+        	"title": "Covid Act Now - America's Covid Tracking Dashboard.",
+        	"description": "See how Covid is spreading in your community.",
+        	"imageUrl": "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/map"
+        }
+    parameters: []
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_d693da6547e149349bb54845ccb7d4aa
+      - id: pair_b211aefaf42c4fd4aadfd979b2feca99
+        name: ""
+        value: ""
+        description: ""
+    authentication: {}
+    metaSortKey: -1666793259281
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    parentId: null
+    modified: 1666793047529
+    created: 1666792504923
+    name: Act Now Links Service
+    description: Example and test https requests for Act Now Links Service
+    scope: design
+    _type: workspace
+  - _id: req_1983810e06b0466dbf10262764b269ee
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666797232376
+    created: 1666793172182
+    url: " {{ _.baseUrl }}/shareLinksByUrl?url=https://www.covidactnow.org"
+    name: shareLinksByUrl
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication: {}
+    metaSortKey: -1666793259256
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: req_f106e6b9861c462e85d3da6bea313b96
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666797256792
+    created: 1666793259231
+    url: " {{ _.baseUrl
+      }}/screenshot?url=https://covidactnow.org/internal/share-image/states/ma"
+    name: Taking a screenshot of a share image page
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication: {}
+    metaSortKey: -1666793259231
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: req_bc7dd1d27366409ba2ecdef8c9ff92e5
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666797276270
+    created: 1666793079547
+    url: " {{ _.baseUrl }}/go/RQFPCERH"
+    name: Using a share link
+    description: ""
+    method: GET
+    body: {}
+    parameters: []
+    headers: []
+    authentication: {}
+    metaSortKey: -1666793079547
+    isPrivate: false
+    settingStoreCookies: true
+    settingSendCookies: true
+    settingDisableRenderRequestBody: false
+    settingEncodeUrl: true
+    settingRebuildPath: true
+    settingFollowRedirects: global
+    _type: request
+  - _id: env_9296945a24efeb582ef354a0eebf75845df3196d
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666797287909
+    created: 1666792504932
+    name: Base Environment
+    data:
+      baseUrl: https://us-central1-act-now-links-dev.cloudfunctions.net/api
+    dataPropertyOrder:
+      "&":
+        - baseUrl
+    color: null
+    isPrivate: false
+    metaSortKey: 1666792504932
+    _type: environment
+  - _id: jar_9296945a24efeb582ef354a0eebf75845df3196d
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666792504932
+    created: 1666792504932
+    name: Default Jar
+    cookies: []
+    _type: cookie_jar
+  - _id: spc_e16d3755c6954d70b06206c11d473348
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666795259005
+    created: 1666792504930
+    fileName: Act Now Links Service
+    contents: ""
+    contentType: yaml
+    _type: api_spec
+  - _id: uts_dc8649cd8a254016b8930f1807284874
+    parentId: wrk_f826f2e04bb646c08ac0fcaaef0dd489
+    modified: 1666792504934
+    created: 1666792504934
+    name: Example Test Suite
+    _type: unit_test_suite
