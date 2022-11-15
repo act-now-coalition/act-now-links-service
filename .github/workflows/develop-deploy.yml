@@ -21,5 +21,5 @@ jobs:
       - name: Install dependencies
         run: yarn global add firebase-tools && yarn install
       - name: Deploy functions
-        run: |
-          firebase deploy --only functions --project develop
+        run: firebase deploy --only functions --project develop
+
