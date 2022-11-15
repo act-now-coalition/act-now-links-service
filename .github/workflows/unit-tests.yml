@@ -6,6 +6,7 @@ jobs:
   test:
     name: Run unit tests
     runs-on: ubuntu-latest
+    environment: develop
     defaults:
       run:
         working-directory: functions
@@ -17,7 +18,7 @@ jobs:
       - name: 'Authenticate to Google Cloud'
         uses: 'google-github-actions/auth@v0'
         with:
-          credentials_json: '${{ secrets.FIREBASE_CI_SERVICE_ACCOUNT }}'
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       - name: Install dependencies and create build
         run: yarn install && yarn build
       - name: Select Firebase project and run tests
