@@ -12,6 +12,8 @@ on:
 jobs:
   deploy-functions:
     runs-on: ubuntu-latest
+    environment: 
+      name: '${{ env.FIREBASE_PROJECT }}'
     defaults:
       run:
         working-directory: functions
