@@ -6,13 +6,13 @@ const email = process.argv[2];
 const password = process.argv[3];
 const projectId = process.argv[4];
 if (!email || !password) {
-  console.log(
+  console.error(
     "Usage: yarn generate-id-token.ts <email> <password> <projectId>"
   );
   process.exit(1);
 }
 if (!["develop", "production"].includes(projectId)) {
-  console.log("projectId must be 'develop' or 'production'");
+  console.error("projectId must be 'develop' or 'production'");
   process.exit(1);
 }
 
@@ -51,10 +51,10 @@ fetch(
       "develop": "act-now-links-dev",
       "production": "act-now-links-prod",
     }
-    console.log(
+    console.error(
       "Error while generating ID token. " +
         "Please check that email and password are correct and exist " +
         `in the ${aliasMap[projectId]} project authentication app. \n`
     );
-    console.log(error);
+    console.error(error);
   });

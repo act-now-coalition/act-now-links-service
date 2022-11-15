@@ -22,6 +22,4 @@ jobs:
         run: yarn global add firebase-tools && yarn install
       - name: Deploy functions
         run: |
-          echo "Deploying to production..."
           firebase deploy --only functions --project production
-          echo "Finished deploy to production."
