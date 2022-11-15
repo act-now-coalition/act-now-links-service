@@ -5,8 +5,10 @@ on:
     branches: [smcclure17/prod-instance, develop]
   workflow_dispatch:
 
-# Choose Github environment to use. 
-# See: https://www.codewrecks.com/post/github/choose-environment-from-branch/
+# Choose Github environment Firebase project to use. 
+# See: https://www.codewrecks.com/post/github/choose-environment-from-branch/.
+# Github environment and Firebase project names must match 1:1, with a valid service account
+# key in the repository secrets labeled FIREBASE_SERVICE_ACCOUNT.
 jobs:
   decipher-environment:
     runs-on: ubuntu-latest
@@ -29,10 +31,8 @@ jobs:
   deploy-functions:
     needs: [decipher-environment]
     runs-on: ubuntu-latest
-    env:
-      ENVIRONMENT_NAME: ${{ needs.decipher-environment.outputs.env_name }}
     environment: 
-      name: ${{ env.ENVIRONMENT_NAME }}
+      name: ${{ needs.decipher-environment.outputs.env_name }}
     defaults:
       run:
         working-directory: functions
@@ -46,6 +46,6 @@ jobs:
         run: yarn global add firebase-tools && yarn install
       - name: Deploy functions
         run: |
-          echo "Deploying to ${{ env.ENVIRONMENT_NAME }}..."
-          firebase deploy --only functions --project ${{ env.ENVIRONMENT_NAME }}
-          echo "Finished deploy to ${{ env.ENVIRONMENT_NAME }}."
+          echo "Deploying to ${{ needs.decipher-environment.outputs.env_name }}..."
+          firebase deploy --only functions --project ${{ needs.decipher-environment.outputs.env_name }}
+          echo "Finished deploy to ${{ needs.decipher-environment.outputs.env_name }}."
