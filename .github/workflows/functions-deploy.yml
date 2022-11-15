@@ -11,10 +11,29 @@ on:
   workflow_dispatch:
 
 jobs:
+  decipher-environment:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Some check on branch
+      id: branch_check
+      run: |
+        echo "Running on branch ${{ github.ref }}"
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "::set-output name=env_name::production"
+        elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
+          echo "::set-output name=env_name::develop"
+        
+    - name: Use variable setup in previous step
+      run: echo "I'm using variable ${{ steps.branch_check.outputs.env_name }}"
+    
+    outputs:
+      env_name: ${{ steps.branch_check.outputs.env_name }}
+
   deploy-functions:
+    needs: [decipher-environment]
     runs-on: ubuntu-latest
     environment: 
-      name: production
+      name: ${{ needs.decipher-environment.outputs.env_name }}
     defaults:
       run:
         working-directory: functions
