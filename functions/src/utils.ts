@@ -13,7 +13,7 @@ const firebaseConfig = process.env.FIREBASE_CONFIG
 const firebaseProjectId = firebaseConfig?.projectId ?? "act-now-links-dev";
 // Subdomains of actnowcoalition.org are configured in the Firebase console for each project.
 const subDomain =
-  firebaseProjectId === "act-now-links-prod" ? "share" : "dev-share";
+  firebaseProjectId === "act-now-links-prod" ? "share" : "share-dev";
 export const API_BASE_URL = isEmulator
   ? `http://localhost:${localFunctionsPort}/${firebaseProjectId}/us-central1/api`
   : `${subDomain}.actnowcoalition.org`;
