@@ -24,7 +24,7 @@ Service to generate sharable links with meta tags and dynamic preview images.
 
 ## API
 
-API base URL: `https://us-central1-act-now-links-dev.cloudfunctions.net`
+API base URL: `https://share.actnowcoalition.org`
 
 Endpoints prefixed with `/auth/` require a valid temporary Firebase ID token. 
 To learn how to generate a token, see [Using Firebase ID Tokens](#using-firebase-id-tokens).
@@ -79,7 +79,7 @@ Returns new or existing share link for the URL provided with meta tags according
 ```
 
 ```bash
-curl -v -X POST -H "Content-Type:application/json" https://us-central1-act-now-links-dev.cloudfunctions.net/api/registerUrl?apiKey=API_KEY_HERE -d @./payload.json
+curl -v -X POST -H "Content-Type:application/json" https://share.actnowcoalition.org/registerUrl?apiKey=API_KEY_HERE -d @./payload.json
 ```
 
 ### Fetching all existing share links for a URL
@@ -102,7 +102,7 @@ Returns all corresponding share links for the URL provided.
 #### Example
 
 ```bash
-curl -v -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=https://www.covidactnow.org"
+curl -v -X GET "https://share.actnowcoalition.org/shareLinksByUrl?url=https://www.covidactnow.org"
 ```
 
 
@@ -138,7 +138,7 @@ Serves screenshot of targeted URL to request URL.
 #### Example
 
 ```bash
-curl -v -X GET "https://us-central1-act-now-links-dev.cloudfunctions.net/api/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
+curl -v -X GET "https://share.actnowcoalition.org/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
 ```
 
 ### Creating a new API key
@@ -179,7 +179,7 @@ Returns a JSON payload with the newly registered or existing API key.
 ```
 
 ```bash
-curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://us-central1-act-now-links-dev.cloudfunctions.net/api/auth/createApiKey -d @email.json
+curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://share.actnowcoalition.org/auth/createApiKey -d @email.json
 ```
 
 ### Modify an API Key
@@ -217,7 +217,7 @@ Disables or enables the API key for the given email.
 ```
 
 ```bash
-curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://us-central1-act-now-links-dev.cloudfunctions.net/api/auth/modifyApiKey -d @data.json
+curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://share.actnowcoalition.org/auth/modifyApiKey -d @data.json
 ```
 
 
