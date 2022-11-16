@@ -24,6 +24,7 @@ import {
 } from "./utils";
 
 const firestoreDb = firebaseApp.firestore();
+firestoreDb.settings({ ignoreUndefinedProperties: true });
 const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
 const apiKeyHandler = new APIKeyHandler(firestoreDb);
 const app = express();
@@ -53,9 +54,11 @@ app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
   // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkFields = {
     url: req.body.url,
-    imageUrl: req.body.imageUrl ?? "",
-    title: req.body.title ?? "",
-    description: req.body.description ?? "",
+    imageUrl: req.body.imageUrl,
+    title: req.body.title,
+    description: req.body.description,
+    imageHeight: req.body.imageHeight ?? 1200,
+    imageWidth: req.body.imageWidth ?? 630,
   };
   // `JSON.stringify(data)` should be deterministic in this case.
   // See https://stackoverflow.com/a/43049877
@@ -94,6 +97,8 @@ app.get("/go/:id", (req, res) => {
       const image = data.imageUrl ?? "";
       const title = data.title ?? "";
       const description = data.description ?? "";
+      const imageHeight = data.imageHeight ?? 1200;
+      const imageWidth = data.imageWidth ?? 630;
       // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
       // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
       res.status(200).send(
@@ -104,6 +109,8 @@ app.get("/go/:id", (req, res) => {
             <meta property="og:title" content="${title}"/>
             <meta property="og:description" content="${description}"/>
             <meta property="og:image" content="${image}" />
+            <meta property="og:image:width" content="${imageWidth}" />
+            <meta property="og:image:height" content="${imageHeight}" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta property="twitter:title" content="${title}"/>
             <meta property="twitter:description" content="${description}"/>

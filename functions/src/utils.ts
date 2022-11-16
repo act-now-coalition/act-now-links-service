@@ -22,6 +22,8 @@ export type ShareLinkFields = {
   imageUrl?: string;
   title?: string;
   description?: string;
+  imageHeight?: number;
+  imageWidth?: number;
 };
 
 /** Fields found in the firestore share-links collection.  */
