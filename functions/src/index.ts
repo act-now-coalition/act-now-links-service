@@ -51,14 +51,13 @@ app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
   if (!isValidUrl(req.body.url)) {
     sendAndThrowInvalidUrlError(res, req.body.url);
   }
-  // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkFields = {
     url: req.body.url,
     imageUrl: req.body.imageUrl,
     title: req.body.title,
     description: req.body.description,
-    imageHeight: req.body.imageHeight ?? 1200,
-    imageWidth: req.body.imageWidth ?? 630,
+    imageHeight: req.body.imageHeight,
+    imageWidth: req.body.imageWidth,
   };
   // `JSON.stringify(data)` should be deterministic in this case.
   // See https://stackoverflow.com/a/43049877
@@ -94,10 +93,10 @@ app.get("/go/:id", (req, res) => {
   getUrlDocumentDataByIdStrict(documentId)
     .then((data) => {
       const fullUrl = data.url;
-      const image = data.imageUrl ?? "";
       const title = data.title ?? "";
       const description = data.description ?? "";
-      const imageHeight = data.imageHeight ?? 1200;
+      const image = data.imageUrl;
+      const imgHeight = data.imageHeight ?? 1200;
       const imageWidth = data.imageWidth ?? 630;
       // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
       // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
@@ -108,13 +107,16 @@ app.get("/go/:id", (req, res) => {
             <meta property="og:url" content url="${fullUrl}"/>
             <meta property="og:title" content="${title}"/>
             <meta property="og:description" content="${description}"/>
-            <meta property="og:image" content="${image}" />
-            <meta property="og:image:width" content="${imageWidth}" />
-            <meta property="og:image:height" content="${imageHeight}" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta property="twitter:title" content="${title}"/>
             <meta property="twitter:description" content="${description}"/>
-            <meta property="twitter:image" content="${image}"/>
+            ${
+              image && 
+              `<meta property="og:image" content="${image}" />
+              <meta property="twitter:image" content="${image}"/>
+              <meta property="og:image:height" content="${imgHeight}" />
+              <meta property="og:image:width" content="${imageWidth}" />`
+            }
           </head>
         </html>`
       );
@@ -152,9 +154,11 @@ app.get("/screenshot", (req, res) => {
   takeScreenshot(screenshotUrl, "temp")
     .then((file: string) => {
       console.log("screenshot generated.");
-      // Let the CDN and the browser cache for 24hrs.
-      console.log("Setting cache-control header.");
-      res.header("cache-control", "public, max-age=86400");
+      // Let the CDN and the browser cache for 24hrs. specify ?nocache to bypass caching.
+      if (req.query['no-cache'] === undefined) {
+        console.log('Setting cache-control header.');
+        res.header('cache-control', 'public, max-age=86400');
+      }
 
       res.sendFile(file);
     })

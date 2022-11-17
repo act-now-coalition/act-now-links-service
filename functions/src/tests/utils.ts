@@ -23,7 +23,7 @@ export const TEST_EMAIL = "email@test.com";
  * @returns Response from the registerUrl endpoint.
  */
 export async function registerUrl(
-  payload: Record<string, string | undefined>,
+  payload: Record<string, string | number | undefined>,
   apiKey: string
 ): Promise<Response> {
   return await fetch(`${API_BASE_URL}/registerUrl?apiKey=${apiKey}`, {
