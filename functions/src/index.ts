@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions";
+import * as compression from "compression";
 import * as express from "express";
 import * as cors from "cors";
 import { APIKeyHandler } from "./APIKeyHandler";
@@ -29,9 +30,10 @@ const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
 const apiKeyHandler = new APIKeyHandler(firestoreDb);
 const app = express();
 app.use(cors({ origin: "*" }));
+app.use(compression());
 const runtimeOpts = {
   timeoutSeconds: 90,
-  memory: "1GB" as "1GB",
+  memory: "2GB" as "2GB",
 };
 export const api = functions.runWith(runtimeOpts).https.onRequest(app);
 
@@ -96,8 +98,8 @@ app.get("/go/:id", (req, res) => {
       const title = data.title ?? "";
       const description = data.description ?? "";
       const image = data.imageUrl;
-      const imgHeight = data.imageHeight ?? 1200;
-      const imageWidth = data.imageWidth ?? 630;
+      const imgHeight = data.imageHeight;
+      const imageWidth = data.imageWidth;
       // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
       // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
       res.status(200).send(
@@ -111,11 +113,17 @@ app.get("/go/:id", (req, res) => {
             <meta property="twitter:title" content="${title}"/>
             <meta property="twitter:description" content="${description}"/>
             ${
-              image && 
+              image &&
               `<meta property="og:image" content="${image}" />
-              <meta property="twitter:image" content="${image}"/>
-              <meta property="og:image:height" content="${imgHeight}" />
-              <meta property="og:image:width" content="${imageWidth}" />`
+              <meta property="twitter:image" content="${image}"/>`
+            }
+            ${
+              imgHeight &&
+              `<meta property="og:image:height" content="${imgHeight}" />`
+            }
+            ${
+              imageWidth &&
+              `<meta property="og:image:width" content="${imageWidth}" />`
             }
           </head>
         </html>`
@@ -155,9 +163,9 @@ app.get("/screenshot", (req, res) => {
     .then((file: string) => {
       console.log("screenshot generated.");
       // Let the CDN and the browser cache for 24hrs. specify ?nocache to bypass caching.
-      if (req.query['no-cache'] === undefined) {
-        console.log('Setting cache-control header.');
-        res.header('cache-control', 'public, max-age=86400');
+      if (req.query["no-cache"] === undefined) {
+        console.log("Setting cache-control header.");
+        res.header("cache-control", "public, max-age=86400");
       }
 
       res.sendFile(file);

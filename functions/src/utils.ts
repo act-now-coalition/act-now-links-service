@@ -16,7 +16,7 @@ const subDomain =
   firebaseProjectId === "act-now-links-prod" ? "share" : "share-dev";
 export const API_BASE_URL = isEmulator
   ? `http://localhost:${localFunctionsPort}/${firebaseProjectId}/us-central1/api`
-  : `${subDomain}.actnowcoalition.org`;
+  : `https://${subDomain}.actnowcoalition.org`;
 
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
 
