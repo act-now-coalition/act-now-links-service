@@ -31,6 +31,8 @@ const apiKeyHandler = new APIKeyHandler(firestoreDb);
 const app = express();
 app.use(cors({ origin: "*" }));
 app.use(compression());
+// TODO: Add minInstances: 1 to prevent/limit cold starts once this is used in production.
+// See: https://firebase.google.com/docs/functions/manage-functions#min-max-instances 
 const runtimeOpts = {
   timeoutSeconds: 90,
   memory: "2GB" as "2GB",
