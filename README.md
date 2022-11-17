@@ -44,13 +44,15 @@ Requires a valid API key. If you do not have a key and would like to register on
 
 ##### Data Parameters
 
-|     Parameter      | Data Type | Description | Required |
-| ----------- | ----------- | ---------------| ------------|                 
-| `url`      | `string`      |  Url to create share link for | `true` |
-| `title`   | `string`        | Title meta tag                 | `false` |
-| `description`   | `string`        | Description meta tag  | `false` |
-| `imageUrl`   | `string`        | Url of image to use as image meta tag | `false` |
-| `apiKey`    | `string`      | Valid API key to authorize the request. <br/> Can also be passed as a query parameter using `?apiKey=API_KEY_HERE`. | `true` | 
+| Parameter    | Data Type   | Description                                  | Required |
+| -----------  | ----------- | -------------------------------------------- | -------- |                 
+| `url`        | `string`    |  Url to create share link for                | `true`   |
+| `title`      | `string`    | Title meta tag                               | `false`  |
+| `description`| `string`    | Description meta tag                         | `false`  |
+| `imageUrl`   | `string`    | Url of image to use as image meta tag        | `false`  |
+| `imageHeight`| `number`    | Height of preview image (imageUrl) in pixels | `false`  |
+| `imageHeight`| `number`    | Width of preview image (imageUrl) in pixels  | `false`  |
+| `apiKey`     | `string`    | Valid API key to authorize the request. <br/> Can also be passed as a query parameter using `?apiKey=API_KEY_HERE`.| `true` | 
 
 
 #### Success response

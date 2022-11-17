@@ -47,9 +47,9 @@ fetch(
     console.log(`Expires in: ${expiresIn} hour(s)`);
   })
   .catch((error) => {
-    const aliasMap = {
-      "develop": "act-now-links-dev",
-      "production": "act-now-links-prod",
+    const aliasMap: {[alias: string]: string} = {
+      develop: "act-now-links-dev",
+      production: "act-now-links-prod",
     }
     console.error(
       "Error while generating ID token. " +

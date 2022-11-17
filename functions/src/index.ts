@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions";
+import * as compression from "compression";
 import * as express from "express";
 import * as cors from "cors";
 import { APIKeyHandler } from "./APIKeyHandler";
@@ -24,13 +25,19 @@ import {
 } from "./utils";
 
 const firestoreDb = firebaseApp.firestore();
+// We have a number of optional fields associated with share links.
+// We want Firestore to omit them if they're not specified.
+firestoreDb.settings({ ignoreUndefinedProperties: true });
 const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
 const apiKeyHandler = new APIKeyHandler(firestoreDb);
 const app = express();
 app.use(cors({ origin: "*" }));
-const runtimeOpts = {
+app.use(compression());
+// TODO: Add minInstances: 1 to prevent/limit cold starts once this is used in production.
+// See: https://firebase.google.com/docs/functions/manage-functions#min-max-instances
+const runtimeOpts: functions.RuntimeOptions = {
   timeoutSeconds: 90,
-  memory: "1GB" as "1GB",
+  memory: "2GB", // Increasing this for CPU reasons (to increase screenshot speed) not memory reasons.
 };
 export const api = functions.runWith(runtimeOpts).https.onRequest(app);
 
@@ -50,12 +57,13 @@ app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
   if (!isValidUrl(req.body.url)) {
     sendAndThrowInvalidUrlError(res, req.body.url);
   }
-  // TODO: Better way to handle missing data than coercing to empty strings?
   const data: ShareLinkFields = {
     url: req.body.url,
-    imageUrl: req.body.imageUrl ?? "",
-    title: req.body.title ?? "",
-    description: req.body.description ?? "",
+    imageUrl: req.body.imageUrl,
+    title: req.body.title,
+    description: req.body.description,
+    imageHeight: req.body.imageHeight,
+    imageWidth: req.body.imageWidth,
   };
   // `JSON.stringify(data)` should be deterministic in this case.
   // See https://stackoverflow.com/a/43049877
@@ -91,9 +99,11 @@ app.get("/go/:id", (req, res) => {
   getUrlDocumentDataByIdStrict(documentId)
     .then((data) => {
       const fullUrl = data.url;
-      const image = data.imageUrl ?? "";
       const title = data.title ?? "";
       const description = data.description ?? "";
+      const image = data.imageUrl;
+      const imgHeight = data.imageHeight;
+      const imageWidth = data.imageWidth;
       // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
       // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
       res.status(200).send(
@@ -103,11 +113,22 @@ app.get("/go/:id", (req, res) => {
             <meta property="og:url" content url="${fullUrl}"/>
             <meta property="og:title" content="${title}"/>
             <meta property="og:description" content="${description}"/>
-            <meta property="og:image" content="${image}" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta property="twitter:title" content="${title}"/>
             <meta property="twitter:description" content="${description}"/>
-            <meta property="twitter:image" content="${image}"/>
+            ${
+              image &&
+              `<meta property="og:image" content="${image}" />
+              <meta property="twitter:image" content="${image}"/>`
+            }
+            ${
+              imgHeight &&
+              `<meta property="og:image:height" content="${imgHeight}" />`
+            }
+            ${
+              imageWidth &&
+              `<meta property="og:image:width" content="${imageWidth}" />`
+            }
           </head>
         </html>`
       );
@@ -144,11 +165,11 @@ app.get("/screenshot", (req, res) => {
   // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
   takeScreenshot(screenshotUrl, "temp")
     .then((file: string) => {
-      console.log("screenshot generated.");
       // Let the CDN and the browser cache for 24hrs.
-      console.log("Setting cache-control header.");
-      res.header("cache-control", "public, max-age=86400");
-
+      // For testing you can specify ?no-cache to bypass caching.
+      if (req.query["no-cache"] === undefined) {
+        res.header("cache-control", "public, max-age=86400");
+      }
       res.sendFile(file);
     })
     .catch((error: Error) => {
