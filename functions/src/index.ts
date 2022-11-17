@@ -25,6 +25,8 @@ import {
 } from "./utils";
 
 const firestoreDb = firebaseApp.firestore();
+// We have a number of optional fields associated with share links.
+// We want Firestore to omit them if they're not specified.
 firestoreDb.settings({ ignoreUndefinedProperties: true });
 const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
 const apiKeyHandler = new APIKeyHandler(firestoreDb);
@@ -32,10 +34,10 @@ const app = express();
 app.use(cors({ origin: "*" }));
 app.use(compression());
 // TODO: Add minInstances: 1 to prevent/limit cold starts once this is used in production.
-// See: https://firebase.google.com/docs/functions/manage-functions#min-max-instances 
-const runtimeOpts = {
+// See: https://firebase.google.com/docs/functions/manage-functions#min-max-instances
+const runtimeOpts: functions.RuntimeOptions = {
   timeoutSeconds: 90,
-  memory: "2GB" as "2GB",
+  memory: "2GB", // Increasing this for CPU reasons (to increase screenshot speed) not memory reasons.
 };
 export const api = functions.runWith(runtimeOpts).https.onRequest(app);
 
@@ -163,13 +165,11 @@ app.get("/screenshot", (req, res) => {
   // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
   takeScreenshot(screenshotUrl, "temp")
     .then((file: string) => {
-      console.log("screenshot generated.");
-      // Let the CDN and the browser cache for 24hrs. specify ?nocache to bypass caching.
+      // Let the CDN and the browser cache for 24hrs.
+      // For testing you can specify ?no-cache to bypass caching.
       if (req.query["no-cache"] === undefined) {
-        console.log("Setting cache-control header.");
         res.header("cache-control", "public, max-age=86400");
       }
-
       res.sendFile(file);
     })
     .catch((error: Error) => {
