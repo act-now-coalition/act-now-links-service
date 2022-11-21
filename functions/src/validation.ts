@@ -1,6 +1,5 @@
 import {
   body,
-  param,
   query,
   ValidationError,
   validationResult,
@@ -33,10 +32,6 @@ export function createApiKeyValidationRules() {
 
 export function modifyApiKeyValidationRules() {
   return [body(APIFields.EMAIL).isEmail(), body(APIFields.ENABLED).isBoolean()];
-}
-
-export function goValidationRules() {
-  return [param(APIFields.ID).isString()];
 }
 
 export function queryUrlValidationRule() {

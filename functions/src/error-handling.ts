@@ -72,7 +72,7 @@ const SHARE_LINK_ERRORS = {
   },
   [ShareLinkErrorCode.VALIDATION_ERROR]: {
     httpCode: 422,
-    message: "Error validating request body.", // generally we override this w/ a specific message
+    message: "Error validating request data.", // generally we override this w/ a specific message
   },
 };
 

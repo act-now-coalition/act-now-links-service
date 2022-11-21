@@ -8,9 +8,7 @@ import { takeScreenshot } from "./screenshot";
 import { isAPIKeyAuthorized, isFirebaseAuthorized } from "./auth";
 import { firebaseApp } from "./init";
 import {
-  ShareLinkError,
   sendAndThrowUnexpectedError,
-  ShareLinkErrorCode,
   sendAndThrowShareLinkOrUnexpectedError,
 } from "./error-handling";
 import {
@@ -27,7 +25,6 @@ import {
   registerUrlValidationRules,
   createApiKeyValidationRules,
   modifyApiKeyValidationRules,
-  goValidationRules,
   queryUrlValidationRule,
 } from "./validation";
 
@@ -100,24 +97,20 @@ app.post(
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/SHORT_URL_HERE
  */
-app.get(
-  "/go/:id",
-  goValidationRules(),
-  validate,
-  (req: Request, res: Response) => {
-    const documentId = req.params.id;
-    getUrlDocumentDataByIdStrict(documentId)
-      .then((data) => {
-        const fullUrl = data.url;
-        const title = data.title ?? "";
-        const description = data.description ?? "";
-        const image = data.imageUrl;
-        const imgHeight = data.imageHeight;
-        const imageWidth = data.imageWidth;
-        // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
-        // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
-        res.status(200).send(
-          `<!doctype html>
+app.get("/go/:id", (req, res) => {
+  const documentId = req.params.id;
+  getUrlDocumentDataByIdStrict(documentId)
+    .then((data) => {
+      const fullUrl = data.url;
+      const title = data.title ?? "";
+      const description = data.description ?? "";
+      const image = data.imageUrl;
+      const imgHeight = data.imageHeight;
+      const imageWidth = data.imageWidth;
+      // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
+      // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
+      res.status(200).send(
+        `<!doctype html>
           <head>
             <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
             <meta property="og:url" content url="${fullUrl}"/>
@@ -144,13 +137,12 @@ app.get(
             }
           </head>
         </html>`
-        );
-      })
-      .catch((error: Error) => {
-        sendAndThrowShareLinkOrUnexpectedError(error, res);
-      });
-  }
-);
+      );
+    })
+    .catch((error: Error) => {
+      sendAndThrowShareLinkOrUnexpectedError(error, res);
+    });
+});
 
 /**
  * Takes a screenshot of the given url and returns the file.
@@ -242,9 +234,6 @@ app.post(
   createApiKeyValidationRules(),
   validate,
   (req: Request, res: Response) => {
-    if (!req.body.email) {
-      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
-    }
     return apiKeyHandler
       .createKey(req.body.email as string)
       .then((apiKey) => {
