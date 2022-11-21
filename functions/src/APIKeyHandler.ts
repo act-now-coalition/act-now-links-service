@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
+import { APIFields } from "./utils";
 
-const EMAIL_REGEX = /@/; // Very permissive, allow any string with an @ symbol.
 export const API_KEY_COLLECTION = "apiKeys";
 
 /** Class for creating and handling API keys.*/
@@ -20,9 +20,6 @@ export class APIKeyHandler {
    * @returns The API key.
    */
   async createKey(email: string): Promise<string> {
-    if (!EMAIL_REGEX.test(email)) {
-      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
-    }
     const apiKey = randomUUID();
     const apiKeyDoc = this.firestoreInstance
       .collection(API_KEY_COLLECTION)
@@ -50,7 +47,7 @@ export class APIKeyHandler {
     if (!apiKey) return false;
     const apiKeyDoc = await this.firestoreInstance
       .collection(API_KEY_COLLECTION)
-      .where("apiKey", "==", apiKey)
+      .where(APIFields.API_KEY, "==", apiKey)
       .get();
     if (apiKeyDoc.empty || !apiKeyDoc.docs[0].data().enabled) {
       return false;
@@ -75,7 +72,7 @@ export class APIKeyHandler {
       await apiKeyDoc.update({ enabled: enabled });
       return enabled;
     } else {
-      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
+      throw new ShareLinkError(ShareLinkErrorCode.EMAIL_NOT_FOUND);
     }
   }
 }
