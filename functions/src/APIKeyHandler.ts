@@ -2,7 +2,6 @@ import { randomUUID } from "crypto";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
 import { APIFields } from "./utils";
 
-const EMAIL_REGEX = /@/; // Very permissive, allow any string with an @ symbol.
 export const API_KEY_COLLECTION = "apiKeys";
 
 /** Class for creating and handling API keys.*/
@@ -21,9 +20,6 @@ export class APIKeyHandler {
    * @returns The API key.
    */
   async createKey(email: string): Promise<string> {
-    if (!EMAIL_REGEX.test(email)) {
-      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
-    }
     const apiKey = randomUUID();
     const apiKeyDoc = this.firestoreInstance
       .collection(API_KEY_COLLECTION)
