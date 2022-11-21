@@ -32,7 +32,7 @@ export enum ShareLinkErrorCode {
   EMAIL_NOT_FOUND,
   INVALID_TOKEN,
   INVALID_API_KEY,
-  INVALID_ARGUMENT,
+  VALIDATION_ERROR,
 }
 
 /**
@@ -70,11 +70,9 @@ const SHARE_LINK_ERRORS = {
       "Invalid or disabled API key. Please verify key is correct " +
       "or reach out to us to acquire a key.",
   },
-  [ShareLinkErrorCode.INVALID_ARGUMENT]: {
-    httpCode: 400,
-    message:
-      "Invalid or missing argument in request body." +
-      "Please verify required arguments are present and correct.",
+  [ShareLinkErrorCode.VALIDATION_ERROR]: {
+    httpCode: 422,
+    message: "Error validating request body.", // generally we override this w/ a specific message
   },
 };
 
@@ -118,23 +116,6 @@ export function sendAndThrowUnexpectedError(
 }
 
 /**
- * Sends an invalid URL error response to the client and throws an internal error.
- *
- * @param res response object to send error to.
- * @param url URL that was invalid.
- */
-export function sendAndThrowInvalidUrlError(res: Response, url?: string) {
-  const shareLinkError = getShareLinkErrorByCode(
-    ShareLinkErrorCode.INVALID_URL
-  );
-  const urlText = url ? `URL: ${url}` : "";
-  res
-    .status(shareLinkError.httpCode)
-    .send(`${shareLinkError.message} ${urlText}`);
-  throw new Error(`${shareLinkError.message} ${urlText}`);
-}
-
-/**
  * Sends the given share link or unexpected error response to the client.
  *
  * @param error Error object to be logged.
@@ -150,4 +131,13 @@ export function sendAndThrowShareLinkOrUnexpectedError(
   } else {
     sendAndThrowUnexpectedError(error, res);
   }
+}
+
+export function sendAndThrowShareLinkErrorCode(
+  code: ShareLinkErrorCode,
+  res: Response
+) {
+  const error = getShareLinkErrorByCode(code);
+  res.status(error.httpCode).send(error.message);
+  throw new ShareLinkError(code);
 }

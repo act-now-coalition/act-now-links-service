@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions";
+import { Request, Response } from "firebase-functions";
 import * as compression from "compression";
 import * as express from "express";
 import * as cors from "cors";
@@ -9,7 +10,6 @@ import { firebaseApp } from "./init";
 import {
   ShareLinkError,
   sendAndThrowUnexpectedError,
-  sendAndThrowInvalidUrlError,
   ShareLinkErrorCode,
   sendAndThrowShareLinkOrUnexpectedError,
 } from "./error-handling";
@@ -21,8 +21,15 @@ import {
   SHARE_LINK_FIRESTORE_COLLECTION,
   API_BASE_URL,
   ShareLinksCollection,
-  isValidUrl,
 } from "./utils";
+import {
+  validate,
+  registerUrlValidationRules,
+  createApiKeyValidationRules,
+  modifyApiKeyValidationRules,
+  goValidationRules,
+  queryUrlValidationRule,
+} from "./validation";
 
 const firestoreDb = firebaseApp.firestore();
 // We have a number of optional fields associated with share links.
@@ -53,36 +60,39 @@ export const api = functions.runWith(runtimeOpts).https.onRequest(app);
  *  - title?: string
  *  - description?: string
  */
-app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
-  if (!isValidUrl(req.body.url)) {
-    sendAndThrowInvalidUrlError(res, req.body.url);
+app.post(
+  "/registerUrl",
+  isAPIKeyAuthorized,
+  registerUrlValidationRules(),
+  validate,
+  (req: Request, res: Response<any>) => {
+    const data: ShareLinkFields = {
+      url: req.body.url,
+      imageUrl: req.body.imageUrl,
+      title: req.body.title,
+      description: req.body.description,
+      imageHeight: req.body.imageHeight,
+      imageWidth: req.body.imageWidth,
+    };
+    // `JSON.stringify(data)` should be deterministic in this case.
+    // See https://stackoverflow.com/a/43049877
+    const documentId = createUniqueId(JSON.stringify(data));
+    getUrlDocumentDataById(documentId)
+      .then((response) => {
+        // If no share link is found for the given params create a new one.
+        if (response === undefined) {
+          return urlCollection.doc(documentId).set(data);
+        }
+        return;
+      })
+      .then(() => {
+        res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
+      })
+      .catch((error: Error) => {
+        sendAndThrowShareLinkOrUnexpectedError(error, res);
+      });
   }
-  const data: ShareLinkFields = {
-    url: req.body.url,
-    imageUrl: req.body.imageUrl,
-    title: req.body.title,
-    description: req.body.description,
-    imageHeight: req.body.imageHeight,
-    imageWidth: req.body.imageWidth,
-  };
-  // `JSON.stringify(data)` should be deterministic in this case.
-  // See https://stackoverflow.com/a/43049877
-  const documentId = createUniqueId(JSON.stringify(data));
-  getUrlDocumentDataById(documentId)
-    .then((response) => {
-      // If no share link is found for the given params create a new one.
-      if (response === undefined) {
-        return urlCollection.doc(documentId).set(data);
-      }
-      return;
-    })
-    .then(() => {
-      res.status(200).send({ url: `${API_BASE_URL}/go/${documentId}` });
-    })
-    .catch((error: Error) => {
-      sendAndThrowShareLinkOrUnexpectedError(error, res);
-    });
-});
+);
 
 /**
  * Redirects share link url to original url.
@@ -90,24 +100,24 @@ app.post("/registerUrl", isAPIKeyAuthorized, (req, res) => {
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/SHORT_URL_HERE
  */
-app.get("/go/:id", (req, res) => {
-  const documentId = req.params.id;
-  if (!documentId || documentId.length === 0) {
-    sendAndThrowInvalidUrlError(res);
-  }
-
-  getUrlDocumentDataByIdStrict(documentId)
-    .then((data) => {
-      const fullUrl = data.url;
-      const title = data.title ?? "";
-      const description = data.description ?? "";
-      const image = data.imageUrl;
-      const imgHeight = data.imageHeight;
-      const imageWidth = data.imageWidth;
-      // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
-      // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
-      res.status(200).send(
-        `<!doctype html>
+app.get(
+  "/go/:id",
+  goValidationRules(),
+  validate,
+  (req: Request, res: Response) => {
+    const documentId = req.params.id;
+    getUrlDocumentDataByIdStrict(documentId)
+      .then((data) => {
+        const fullUrl = data.url;
+        const title = data.title ?? "";
+        const description = data.description ?? "";
+        const image = data.imageUrl;
+        const imgHeight = data.imageHeight;
+        const imageWidth = data.imageWidth;
+        // TODO need to make sure that http-equiv="Refresh" actually allows us to track clicks/get
+        // analytics. See discussion on redirect methods here: https://stackoverflow.com/a/1562539/14034347
+        res.status(200).send(
+          `<!doctype html>
           <head>
             <meta http-equiv="Refresh" content="0; url='${fullUrl}'" />
             <meta property="og:url" content url="${fullUrl}"/>
@@ -117,26 +127,30 @@ app.get("/go/:id", (req, res) => {
             <meta property="twitter:title" content="${title}"/>
             <meta property="twitter:description" content="${description}"/>
             ${
-              image &&
-              `<meta property="og:image" content="${image}" />
+              image
+                ? `<meta property="og:image" content="${image}" />
               <meta property="twitter:image" content="${image}"/>`
+                : ""
             }
             ${
-              imgHeight &&
-              `<meta property="og:image:height" content="${imgHeight}" />`
+              imgHeight
+                ? `<meta property="og:image:height" content="${imgHeight}" />`
+                : ""
             }
             ${
-              imageWidth &&
-              `<meta property="og:image:width" content="${imageWidth}" />`
+              imageWidth
+                ? `<meta property="og:image:width" content="${imageWidth}" />`
+                : ""
             }
           </head>
         </html>`
-      );
-    })
-    .catch((error: Error) => {
-      sendAndThrowShareLinkOrUnexpectedError(error, res);
-    });
-});
+        );
+      })
+      .catch((error: Error) => {
+        sendAndThrowShareLinkOrUnexpectedError(error, res);
+      });
+  }
+);
 
 /**
  * Takes a screenshot of the given url and returns the file.
@@ -156,26 +170,29 @@ app.get("/go/:id", (req, res) => {
  *  </div>
  * ```
  */
-app.get("/screenshot", (req, res) => {
-  const screenshotUrl = req.query.url as string;
-  if (!isValidUrl(screenshotUrl)) {
-    sendAndThrowInvalidUrlError(res, screenshotUrl);
+app.get(
+  "/screenshot",
+  queryUrlValidationRule(),
+  validate,
+  (req: Request, res: Response) => {
+    const screenshotUrl = req.query.url as string;
+
+    // We might have issues with collisions if multiple screenshots are taken at the same time.
+    // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
+    takeScreenshot(screenshotUrl, "temp")
+      .then((file: string) => {
+        // Let the CDN and the browser cache for 24hrs.
+        // For testing you can specify ?no-cache to bypass caching.
+        if (req.query["no-cache"] === undefined) {
+          res.header("cache-control", "public, max-age=86400");
+        }
+        res.sendFile(file);
+      })
+      .catch((error: Error) => {
+        sendAndThrowUnexpectedError(error, res);
+      });
   }
-  // We might have issues with collisions if multiple screenshots are taken at the same time.
-  // TODO: Use a unique filename for each screenshot, then delete the file after it's sent?
-  takeScreenshot(screenshotUrl, "temp")
-    .then((file: string) => {
-      // Let the CDN and the browser cache for 24hrs.
-      // For testing you can specify ?no-cache to bypass caching.
-      if (req.query["no-cache"] === undefined) {
-        res.header("cache-control", "public, max-age=86400");
-      }
-      res.sendFile(file);
-    })
-    .catch((error: Error) => {
-      sendAndThrowUnexpectedError(error, res);
-    });
-});
+);
 
 /**
  * Retrieves all share links for the supplied url.
@@ -184,28 +201,30 @@ app.get("/screenshot", (req, res) => {
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/shareLinksByUrl?url=URL_HERE
  *
  */
-app.get("/shareLinksByUrl", (req, res) => {
-  const url = req.query.url as string;
-  if (!isValidUrl(url)) {
-    sendAndThrowInvalidUrlError(res, url);
+app.get(
+  "/shareLinksByUrl",
+  queryUrlValidationRule(),
+  validate,
+  (req: Request, res: Response) => {
+    const url = req.query.url as string;
+    firestoreDb
+      .collection(SHARE_LINK_FIRESTORE_COLLECTION)
+      .where(ShareLinksCollection.URL, "==", url)
+      .get()
+      .then((querySnapshot) => {
+        const shareLinks: { [shareLink: string]: ShareLinkFields } = {};
+        querySnapshot.docs.forEach(
+          (doc) =>
+            (shareLinks[`${API_BASE_URL}/go/${doc.id}`] =
+              doc.data() as ShareLinkFields)
+        );
+        res.status(200).send({ urls: shareLinks });
+      })
+      .catch((error: Error) => {
+        sendAndThrowUnexpectedError(error, res);
+      });
   }
-  firestoreDb
-    .collection(SHARE_LINK_FIRESTORE_COLLECTION)
-    .where(ShareLinksCollection.URL, "==", url)
-    .get()
-    .then((querySnapshot) => {
-      const shareLinks: { [shareLink: string]: ShareLinkFields } = {};
-      querySnapshot.docs.forEach(
-        (doc) =>
-          (shareLinks[`${API_BASE_URL}/go/${doc.id}`] =
-            doc.data() as ShareLinkFields)
-      );
-      res.status(200).send({ urls: shareLinks });
-    })
-    .catch((error: Error) => {
-      sendAndThrowUnexpectedError(error, res);
-    });
-});
+);
 
 /**
  * Create an API key for the given email.
@@ -217,19 +236,25 @@ app.get("/shareLinksByUrl", (req, res) => {
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/createApiKey?email=EMAIL_HERE
  */
-app.post("/auth/createApiKey", isFirebaseAuthorized, (req, res) => {
-  if (!req.body.email) {
-    throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
+app.post(
+  "/auth/createApiKey",
+  isFirebaseAuthorized,
+  createApiKeyValidationRules(),
+  validate,
+  (req: Request, res: Response) => {
+    if (!req.body.email) {
+      throw new ShareLinkError(ShareLinkErrorCode.INVALID_EMAIL);
+    }
+    return apiKeyHandler
+      .createKey(req.body.email as string)
+      .then((apiKey) => {
+        res.status(200).send({ apiKey });
+      })
+      .catch((error: Error) => {
+        sendAndThrowShareLinkOrUnexpectedError(error, res);
+      });
   }
-  return apiKeyHandler
-    .createKey(req.body.email as string)
-    .then((apiKey) => {
-      res.status(200).send({ apiKey });
-    })
-    .catch((error: Error) => {
-      sendAndThrowShareLinkOrUnexpectedError(error, res);
-    });
-});
+);
 
 /**
  * Disable or enable API key for the given email.
@@ -246,19 +271,20 @@ app.post("/auth/createApiKey", isFirebaseAuthorized, (req, res) => {
  * Expected url structure:
  * https://us-central1-act-now-links-dev.cloudfunctions.net/api/modifyApiKey
  */
-app.post("/auth/modifyApiKey", isFirebaseAuthorized, (req, res) => {
-  const enabled = req.body.enabled;
-  if (enabled !== true && enabled !== false) {
-    const error = new ShareLinkError(ShareLinkErrorCode.INVALID_ARGUMENT);
-    res.status(error.httpCode).send(error.message);
-    throw error;
+app.post(
+  "/auth/modifyApiKey",
+  isFirebaseAuthorized,
+  modifyApiKeyValidationRules(),
+  validate,
+  (req: Request, res: Response) => {
+    const enabled = req.body.enabled;
+    apiKeyHandler
+      .modifyKey(req.body.email as string, enabled)
+      .then((enabled) => {
+        res.status(200).send(`Success. API key status set to ${enabled}`);
+      })
+      .catch((error) => {
+        sendAndThrowShareLinkOrUnexpectedError(error, res);
+      });
   }
-  apiKeyHandler
-    .modifyKey(req.body.email as string, enabled)
-    .then((enabled) => {
-      res.status(200).send(`Success. API key status set to ${enabled}`);
-    })
-    .catch((error) => {
-      sendAndThrowShareLinkOrUnexpectedError(error, res);
-    });
-});
+);

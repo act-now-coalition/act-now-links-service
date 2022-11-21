@@ -36,6 +36,16 @@ export enum ShareLinksCollection {
   IMAGE_URL = "imageUrl",
   TITLE = "title",
   DESCRIPTION = "description",
+  IMAGE_HEIGHT = "imageHeight",
+  IMAGE_WIDTH = "imageWidth",
+}
+
+/** General fields used in the API */
+export enum APIFields {
+  API_KEY = "apiKey",
+  EMAIL = "email",
+  ENABLED = "enabled",
+  ID = "id",
 }
 
 /**
