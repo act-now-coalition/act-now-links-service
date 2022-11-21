@@ -13,7 +13,7 @@ import {
 } from "./error-handling";
 import * as functions from "firebase-functions";
 
-export function registerUrlValidationRules() {
+export const registerUrlValidationRules = () => {
   return [
     // Use a custom URL validator b/c we need to ensure an HTTP(S) protocol is
     // present for use in the /go/ endpoint.
@@ -24,19 +24,22 @@ export function registerUrlValidationRules() {
     body(ShareLinksCollection.IMAGE_HEIGHT).optional().isInt(),
     body(ShareLinksCollection.IMAGE_WIDTH).optional().isInt(),
   ];
-}
+};
 
-export function createApiKeyValidationRules() {
+export const createApiKeyValidationRules = () => {
   return [body(APIFields.EMAIL).isEmail()];
-}
+};
 
-export function modifyApiKeyValidationRules() {
-  return [body(APIFields.EMAIL).isEmail(), body(APIFields.ENABLED).isBoolean()];
-}
+export const modifyApiKeyValidationRules = () => {
+  return [
+    body(APIFields.EMAIL).isEmail(),
+    body(APIFields.ENABLED).isBoolean({ strict: true }),
+  ];
+};
 
-export function queryUrlValidationRule() {
+export const queryUrlValidationRule = () => {
   return [query(ShareLinksCollection.URL).custom(isValidUrl)];
-}
+};
 
 export function validate(req: Request, res: Response, next: NextFunction) {
   const errors = validationResult(req);
@@ -44,10 +47,10 @@ export function validate(req: Request, res: Response, next: NextFunction) {
     return next();
   }
   const error = errors.array()[0]; // Just handle the first error if there are multiple.
-  return validationToShareLinkError(res, error);
+  return sendAndThrowValidationError(res, error);
 }
 
-function validationToShareLinkError(
+function sendAndThrowValidationError(
   res: functions.Response,
   error: ValidationError
 ) {
@@ -73,6 +76,7 @@ function validationToShareLinkError(
         ShareLinkErrorCode.VALIDATION_ERROR
       );
       // override the default error message with the more specific one.
-      return res.status(validationError.httpCode).send(msg);
+      res.status(validationError.httpCode).send(msg);
+      throw new Error(msg);
   }
 }
