@@ -37,6 +37,10 @@
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
+        "source": "admin/**.html",
+        "destination": "admin/**"
+      },
+      {
         "source": "**",
         "function": "api"
       }

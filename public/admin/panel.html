@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome to Firebase Hosting</title>
+    <script src="../dist/src/panel.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      crossorigin="anonymous"
+    />
+    <link href="../index.css" rel="stylesheet"></link>
+    <link href="./panel.css" rel="stylesheet"></link>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-transparent">
+      <a class="navbar-brand" href="#">
+        <svg
+          role="img"
+          width="115"
+          height="24"
+          viewBox="0 0 92 19"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-labelledby="{logoId}"
+        >
+          <title id="{logoId}">Act Now Coalition logo</title>
+          <path
+            d="M11.496 14.16L12.84 18H16.032L9.672 0.887999H6.408L0.192 18H3.408L4.704 14.16H11.496ZM5.592 11.496L7.872 4.776L8.04 3.84L8.208 4.776L10.56 11.496H5.592ZM22.9393 18.36C26.7553 18.36 29.4193 16.56 29.7313 12.48V12.408H26.4433V12.432C26.1313 14.544 24.9793 15.6 22.9633 15.6C20.6593 15.6 19.2673 14.064 19.2673 11.328V11.016C19.2673 8.088 20.7793 6.552 22.9873 6.552C24.9073 6.552 26.1313 7.512 26.4193 9.672V9.744H29.7073V9.696C29.3953 5.664 26.7793 3.864 22.9633 3.864C20.2993 3.864 18.1393 4.992 16.9153 7.104C16.3153 8.16 16.0033 9.48 16.0033 11.016V11.376C16.0033 15.888 18.5233 18.36 22.9393 18.36ZM39.3006 18V15.072H38.3166C36.7806 15.072 36.0606 14.904 35.8446 13.992C35.7246 13.536 35.6526 12.864 35.6526 11.952V6.984H39.3006V4.2H35.6526V0.48H32.9646C32.9646 0.887999 32.9406 1.704 32.9166 2.304C32.8446 3.432 32.7006 3.96 32.2446 4.176C32.0286 4.272 31.7166 4.32 31.2606 4.32H30.0366V6.984H32.7246V12.48C32.7246 15.288 33.1566 16.8 34.5486 17.496C35.2206 17.808 36.2286 18 37.5246 18H39.3006ZM44.3398 18V6.36L44.2198 5.16L44.6998 6.288L52.1158 18H55.0198V0.887999H52.0438V12.36L52.1398 13.584L51.6838 12.456L44.3638 0.887999H41.3638V18H44.3398ZM63.4446 18.36C66.2526 18.36 68.3406 17.256 69.5406 15.168C70.1166 14.136 70.4046 12.888 70.4046 11.376V11.016C70.4046 7.968 69.1566 5.832 67.0446 4.704C66.0126 4.128 64.8366 3.864 63.4446 3.864C60.7326 3.864 58.5966 4.992 57.3966 7.104C56.7966 8.16 56.4846 9.48 56.4846 11.016V11.376C56.4846 15.888 58.9806 18.36 63.4446 18.36ZM63.4446 15.6C61.0926 15.6 59.7006 14.064 59.7006 11.328V11.016C59.7006 8.088 61.2126 6.552 63.4686 6.552C65.7486 6.552 67.2126 8.184 67.2126 11.016V11.328C67.2126 14.064 65.8206 15.6 63.4446 15.6ZM80.8997 8.808L84.1877 18H86.9957L91.2917 4.2H88.2197L85.3397 13.992L81.9797 4.2H79.9157L76.2917 14.016L73.8677 4.2H70.7477L74.4677 18H77.3237L80.8997 8.808Z"
+            fill="#0D0D0D"
+          />
+        </svg>
+      </a>
+      <span id="project-id"> act-now-links-dev </span>
+    </nav>
+    <div class="container-md d-flex justify-content-center">
+      <div class="vstack">
+        <div id="create-api-key">
+          <h3>Register a new or fetch an existing API Key</h3>
+          <form id="register-key">
+            <div class="mb-3 input-group">
+              <input
+                type="text"
+                class="form-control"
+                id="apiKeyName"
+                placeholder="Email to register..."
+              />
+              <div class="input-group-append">
+                <button
+                  type="submit"
+                  value="send"
+                  class="btn btn-outline-secondary"
+                >
+                  Get API Key
+                </button>
+              </div>
+            </div>
+          </form>
+          <div id="api-response"></div>
+        </div>
+        <h3>API Key Catalog</h3>
+        <table id="api-key-table">
+          <tr>
+            <th>Email</th>
+            <th>API Key</th>
+            <th>Creation Date</th>
+            <th>Key is Enabled</th>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
