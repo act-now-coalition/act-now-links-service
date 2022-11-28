@@ -13,7 +13,7 @@ export const TEST_SHARE_LINK_URL = `${API_BASE_URL}/go/${createUniqueId(
   JSON.stringify(TEST_PAYLOAD)
 )}`;
 
-export const TEST_EMAIL = "email@test.com";
+export const TEST_EMAIL = "email@actnowcoalition.org";
 
 /**
  * Registers a new share link for the given arguments, or returns the existing one.

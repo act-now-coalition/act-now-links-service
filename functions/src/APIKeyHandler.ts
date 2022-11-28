@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
-import { APIFields } from "./utils";
+import { APIFields, ApiKeysCollection } from "./utils";
 
 export const API_KEY_COLLECTION = "apiKeys";
 
@@ -75,4 +75,14 @@ export class APIKeyHandler {
       throw new ShareLinkError(ShareLinkErrorCode.EMAIL_NOT_FOUND);
     }
   }
+
+  /** Get all API keys and their metadata.
+   * 
+   * @returns Array of API keys and metadata.
+   */
+   async allKeys() {
+    const querySnapshot = await this.firestoreInstance.collection(API_KEY_COLLECTION).get();
+    return querySnapshot.docs.map(doc => doc.data() as ApiKeysCollection);
+  }
+
 }
