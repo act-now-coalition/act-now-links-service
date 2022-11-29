@@ -32,6 +32,7 @@ export type ShareLinkFields = {
 };
 
 export interface ApiKeysCollection {
+  email: string,
   apiKey: string;
   enabled: boolean;
   created: Timestamp;

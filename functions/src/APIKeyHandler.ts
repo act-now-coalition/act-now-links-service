@@ -77,12 +77,15 @@ export class APIKeyHandler {
   }
 
   /** Get all API keys and their metadata.
-   * 
+   *
    * @returns Array of API keys and metadata.
    */
-   async allKeys() {
-    const querySnapshot = await this.firestoreInstance.collection(API_KEY_COLLECTION).get();
-    return querySnapshot.docs.map(doc => doc.data() as ApiKeysCollection);
+  async allKeys() {
+    const querySnapshot = await this.firestoreInstance
+      .collection(API_KEY_COLLECTION)
+      .get();
+    return querySnapshot.docs.map(
+      (doc) => ({ email: doc.id, ...doc.data() } as ApiKeysCollection)
+    );
   }
-
 }
