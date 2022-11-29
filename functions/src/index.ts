@@ -282,7 +282,6 @@ app.post(
  * Returns all the registered API keys and their properties. 
  * 
  * Requires Bearer authorization token with a valid Firebase ID token.
- *
  */
 app.get("/auth/allApiKeys", isFirebaseAuthorized, (res: Response) => {
   return apiKeyHandler.allKeys().then((keys) => {
