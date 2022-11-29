@@ -7,11 +7,14 @@ import {
 import { initializeApp } from "firebase/app";
 import {
   getDocs,
+  setDoc,
+  getDoc,
   getFirestore,
   collection,
   doc,
   updateDoc,
 } from "firebase/firestore";
+import uuid from "uuidv4";
 
 const productionConfig = {
   apiKey: "AIzaSyBbve3kWHp3b8izyph0puHaPdCLOfkJNww",
@@ -33,8 +36,16 @@ const developConfig = {
   measurementId: "G-TGZKGK2HJV",
 };
 
-const firebaseApp = initializeApp(productionConfig);
+export const isProductionEnv = window.location.href.includes(
+  "share.actnowcoalition.org"
+);
+
+export const API_KEY_COLLECTION = "apiKeys";
+const firebaseApp = initializeApp(
+  isProductionEnv ? productionConfig : developConfig
+);
 const auth = getAuth(firebaseApp);
+const firestore = getFirestore(firebaseApp);
 
 export function handleLogin() {
   const provider = new GoogleAuthProvider();
@@ -48,15 +59,15 @@ export function handleLogin() {
       }
     })
     .catch((error) => {
-      const body = document.querySelector("body");
+      const mainCard = document.getElementById("message");
       const message = document.createElement("div");
-      message.innerHTML = `
-            <div id="error">
-              <h2>Error</h2>
-              <h1>${error.message}</h1>
-            </div>
-          `;
-      body?.prepend(message);
+      message.id = "login-error";
+      if (error.message === "Please use an actnowcoalition.org address") {
+        message.innerText = error.message;
+      } else {
+        message.innerText = "Unexpected error, try again later.";
+      }
+      mainCard?.prepend(message);
     });
 }
 
@@ -75,31 +86,37 @@ export function checkLogin() {
 }
 
 export async function fetchAPIKeys() {
-  const db = getFirestore();
-  const querySnapshot = await getDocs(collection(db, "apiKeys"));
-  return querySnapshot.docs
+  const keyCollection = collection(firestore, API_KEY_COLLECTION);
+  const apiKeyDocs = await getDocs(keyCollection);
+  return apiKeyDocs.docs;
 }
 
 export async function updateEnabledStatus(email: string, enabled: string) {
-  const token = await auth.currentUser.getIdToken();
-  return fetch("https://share.actnowcoalition.org/auth/modifyApiKey", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ email, enabled: enabled === "true" }),
-  });
+  if (enabled !== "true" && enabled !== "false") {
+    throw new Error("Invalid enabled status");
+  }
+  const keyCollection = collection(firestore, API_KEY_COLLECTION);
+  const apiKeyDoc = doc(keyCollection, email);
+  await updateDoc(apiKeyDoc, { enabled: enabled === "true" });
+  return enabled;
 }
 
 export async function createAPIKey(email: string) {
-  const token = auth.currentUser.getIdToken();
-  return fetch("https://share.actnowcoalition.org/auth/createApiKey", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ email }),
-  });
+  if (!email || !/\@/.test(email)) {
+    throw new Error("Invalid email address");
+  }
+  const apiKey = uuid();
+  const keyCollection = collection(firestore, API_KEY_COLLECTION);
+  const apiKeyDoc = doc(keyCollection, email);
+  const apiKeyDocData = await getDoc(apiKeyDoc);
+  if (apiKeyDocData.exists()) {
+    return apiKeyDocData.data().apiKey as string;
+  } else {
+    await setDoc(apiKeyDoc, {
+      apiKey,
+      created: new Date(),
+      enabled: true,
+    });
+    return apiKey;
+  }
 }

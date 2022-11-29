@@ -3,6 +3,7 @@ import {
   checkLogin,
   createAPIKey,
   fetchAPIKeys,
+  isProductionEnv,
   updateEnabledStatus,
 } from "./firebase";
 
@@ -10,21 +11,26 @@ const failColor = "#f37e7c";
 const successColor = "#7fc782";
 
 window.addEventListener("DOMContentLoaded", async () => {
-  // Need to only load table if logged in, and ensure table exists.
+  // Check if user is logged in, redirect to login page if not.
+  // All actual security is handled by Firestore rules.
   checkLogin();
 
-  // Populate table with API keys and key info
+  // Populate table with API keys and key info.
   const table = document.getElementById("api-key-table");
   const apiKeyDocs = await fetchAPIKeys();
   apiKeyDocs.forEach((doc) => {
     table.appendChild(createTableRow(doc));
   });
 
-  // Handle API key creation form
+  // Handle API key creation form.
   const createAPIKeyButton = document.getElementById("register-key");
   createAPIKeyButton.addEventListener("submit", (e) => {
     submitApiKeyRegister(e);
   });
+
+  // Add a label to display which project is in use.
+  const projectLabel = document.getElementById("project-label");
+  projectLabel.innerText = `act-now-links-${isProductionEnv ? "prod" : "dev"}`;
 });
 
 /** Create a table row for a given API key document*/
@@ -63,20 +69,20 @@ function createTableRow(apiDoc: QueryDocumentSnapshot) {
 }
 
 /** Submit email from form to API to create or fetch an API key. */
-async function submitApiKeyRegister(event: SubmitEvent) {
+function submitApiKeyRegister(event: SubmitEvent) {
   event.preventDefault();
   const email = (document.getElementById("apiKeyName") as HTMLInputElement)
     .value;
-  const res = await createAPIKey(email);
-  if (!email) {
-    setApiResponseText("Please enter an email to register.", failColor);
-    return;
-  } else if (!res.ok) {
-    setApiResponseText(await res.text(), failColor);
-  } else {
-    const json = await res.json();
-    setApiResponseText(`Success! API key: ${json.apiKey}`, successColor);
-  }
+  createAPIKey(email)
+    .then((key) => {
+      setApiResponseText(`Success! API key: ${key}`, successColor);
+    })
+    .catch(() => {
+      setApiResponseText(
+        "Internal Error, failed to create API key.",
+        failColor
+      );
+    });
 }
 
 /** Update API key status and display results. */
@@ -85,17 +91,13 @@ function modifyApiKeyStatus(
   select: HTMLSelectElement
 ) {
   updateEnabledStatus(apiDoc.id, select.value)
-    .then((response) => {
-      if (response.ok) {
-        const msg = `Updated API key status for ${apiDoc.id} to ${select.value}`;
-        setApiResponseText(msg, successColor);
-      } else {
-        const msg = `Failed to update API key status for ${apiDoc.id}`;
-        setApiResponseText(msg, failColor);
-      }
+    .then((value) => {
+      const msg = `Updated API key status for ${apiDoc.id} to ${value}`;
+      setApiResponseText(msg, successColor);
     })
-    .catch((error) => {
-      throw error;
+    .catch(() => {
+      const msg = `Failed to update API key status for ${apiDoc.id}`;
+      setApiResponseText(msg, failColor);
     });
 }
 

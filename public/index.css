@@ -44,6 +44,7 @@ body {
   #message svg {
     display: block;
     margin: auto;
+    margin-top: 20px;
   }
   @media (max-width: 600px) {
     body,
@@ -55,4 +56,10 @@ body {
     body {
       border-top: 16px solid #ffa100;
     }
+  }
+  #login-error {
+    padding: 10px;
+    border-radius: 4px;
+    margin: auto;
+    background-color: #f37e7c;
   }

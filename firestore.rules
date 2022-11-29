@@ -1,8 +1,15 @@
-// Allow read/write access on all documents to any user signed in to the application
+rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
+  // Allow user logged in with @actnowcoalition.org
+  // accounts to make changes to API keys.
+  match /databases/apiKeys/documents {
     match /{document=**} {
-      allow read, write: if false;
+			allow read, write: if request.auth.token.email.split("@")[1] == "actnowcoalition.org"
+    }
+  }
+  match /databases/share-links/documents {
+    match /{document=**} {
+			allow read, write: if false;
     }
   }
 }
