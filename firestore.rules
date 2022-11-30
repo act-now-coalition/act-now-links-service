@@ -1,15 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
-  // Allow user logged in with @actnowcoalition.org
-  // accounts to make changes to API keys.
-  match /databases/apiKeys/documents {
-    match /{document=**} {
-			allow read, write: if request.auth.token.email.split("@")[1] == "actnowcoalition.org"
+  match /databases/{database}/documents {
+    match /apiKeys/{document=**} {
+      allow read, write: if request.auth.token.email.split("@")[1] == "actnowcoalition.org";
     }
-  }
-  match /databases/share-links/documents {
-    match /{document=**} {
-			allow read, write: if false;
+    match /share-links/{document=**} {
+    	allow read, write: if false;
     }
   }
 }
