@@ -1,4 +1,4 @@
-name: Develop Firebase functions and hosting deploy
+name: Develop Firebase functions deploy
 
 on:
   push:
@@ -20,6 +20,6 @@ jobs:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       - name: Install dependencies
         run: yarn global add firebase-tools && yarn install
-      - name: Deploy functions and hosting
-        run: firebase deploy --only functions,hosting --project develop
+      - name: Deploy functions
+        run: firebase deploy --only functions --project develop
 
