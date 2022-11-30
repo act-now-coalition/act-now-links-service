@@ -1,7 +1,7 @@
 import { QueryDocumentSnapshot } from "firebase/firestore";
 import {
   checkLogin,
-  createAPIKey,
+  createOrFetchExistingAPIKey,
   fetchAPIKeys,
   isProductionEnv,
   updateEnabledStatus,
@@ -42,7 +42,7 @@ function createTableRow(apiDoc: QueryDocumentSnapshot) {
   const apiKey = document.createElement("td");
   apiKey.innerText = apiDoc.get("apiKey");
   const creationDate = document.createElement("td");
-  creationDate.innerText = getFormattedDate(apiDoc.get("created").toDate());
+  creationDate.innerText = apiDoc.get("created").toDate().toLocaleDateString();
   const enabled = document.createElement("td");
 
   // Create dropdown for API key status
@@ -73,7 +73,7 @@ function submitApiKeyRegister(event: SubmitEvent) {
   event.preventDefault();
   const email = (document.getElementById("apiKeyName") as HTMLInputElement)
     .value;
-  createAPIKey(email)
+    createOrFetchExistingAPIKey(email)
     .then((key) => {
       setApiResponseText(`Success! API key: ${key}`, successColor);
     })
@@ -99,14 +99,6 @@ function modifyApiKeyStatus(
       const msg = `Failed to update API key status for ${apiDoc.id}`;
       setApiResponseText(msg, failColor);
     });
-}
-
-/** Format JS date object to MM/DD/YYYY string */
-function getFormattedDate(date: Date) {
-  const year = date.getFullYear();
-  const month = (1 + date.getMonth()).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  return month + "/" + day + "/" + year;
 }
 
 /** Post outcome of Firebase interactions to the page. */

@@ -4,6 +4,9 @@
         "target": "ES5",
         "module": "ES2015",
         "moduleResolution":"node"
-
     },
+    "exclude": [
+        "node_modules",
+        "functions"
+    ]
 }

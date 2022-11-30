@@ -2,7 +2,7 @@ name: Production hosting deploy
 
 on:
   push:
-    branches: [production]
+    branches: [main]
 
 jobs:
   deploy-functions:
@@ -19,7 +19,9 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       - name: Install dependencies
-        run: yarn install yarn global add firebase-tools&& yarn build
+        run: yarn install && yarn global add firebase-tools
+      - name: Build static files
+        run: yarn build
       - name: Deploy hosting
-        run: firebase deploy --only hosting --project production
+        run: firebase deploy --only hosting --project develop
 

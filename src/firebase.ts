@@ -74,9 +74,7 @@ export function handleLogin() {
 export function checkLogin() {
   onAuthStateChanged(auth, (user) => {
     const userEmail = user?.email;
-    if (userEmail && /\@actnowcoalition.org/.test(userEmail)) {
-      return true
-    } else {
+    if (!userEmail || !/\@actnowcoalition.org/.test(userEmail)) {
       // Redirect back to login page if not logged in.
       // Sign out in case user is using non-actnowcoalition.org email.
       auth.signOut();
@@ -101,7 +99,7 @@ export async function updateEnabledStatus(email: string, enabled: string) {
   return enabled;
 }
 
-export async function createAPIKey(email: string) {
+export async function createOrFetchExistingAPIKey(email: string) {
   if (!email || !/\@/.test(email)) {
     throw new Error("Invalid email address");
   }

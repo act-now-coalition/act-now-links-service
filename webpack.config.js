@@ -1,4 +1,3 @@
-const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const webpack = require("webpack");
 
@@ -9,7 +8,7 @@ module.exports = {
       {
         test: /\.ts?$/,
         use: "ts-loader",
-        exclude: /node_modules/,
+        // set excludes in tsconfig.json instead, b/c we use ts-loader
       },
     ],
   },
@@ -17,7 +16,7 @@ module.exports = {
     extensions: [".tsx", ".ts", ".js"],
   },
   output: {
-    path: path.resolve(__dirname, "dist"),
+    path: path.resolve(__dirname, "public/dist"),
     filename: "[name].js",
   },
 

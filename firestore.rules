@@ -2,10 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /apiKeys/{document=**} {
-      allow read, write: if request.auth.token.email.split("@")[1] == "actnowcoalition.org";
-    }
-    match /share-links/{document=**} {
-    	allow read, write: if false;
+      allow read, write: if request.auth.token.email.split("@")[1] == "actnowcoalition.org" && request.auth.token.email_verified;
     }
   }
 }
