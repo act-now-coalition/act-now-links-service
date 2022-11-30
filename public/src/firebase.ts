@@ -75,7 +75,7 @@ export function checkLogin() {
   onAuthStateChanged(auth, (user) => {
     const userEmail = user?.email;
     if (userEmail && /\@actnowcoalition.org/.test(userEmail)) {
-      console.log("CORRECT EMAIL");
+      return true
     } else {
       // Redirect back to login page if not logged in.
       // Sign out in case user is using non-actnowcoalition.org email.

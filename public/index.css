@@ -23,8 +23,9 @@ body {
     margin: 16px 0 24px;
     font-size: 14px;
   }
-  #message a, button {
+  #message a, #message button {
     display: block;
+    margin-bottom: 10px;
     text-align: center;
     background: #e5f943;
     text-transform: uppercase;
@@ -41,7 +42,7 @@ body {
     text-align: center;
     font-size: 13px;
   }
-  #message svg {
+  #message img {
     display: block;
     margin: auto;
     margin-top: 20px;
