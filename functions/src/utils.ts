@@ -2,6 +2,7 @@ import * as crypto from "crypto";
 import * as firebaseSettings from "../../firebase.json";
 import { firebaseApp } from "./init";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
+import { Timestamp } from "firebase/firestore"
 
 const localFunctionsPort = firebaseSettings.emulators.functions.port;
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
@@ -16,7 +17,7 @@ const subDomain =
   firebaseProjectId === "act-now-links-prod" ? "share" : "share-dev";
 export const API_BASE_URL = isEmulator
   ? `http://localhost:${localFunctionsPort}/${firebaseProjectId}/us-central1/api`
-  : `${subDomain}.actnowcoalition.org`;
+  : `https://${subDomain}.actnowcoalition.org`;
 
 export const SHARE_LINK_FIRESTORE_COLLECTION = "share-links";
 
@@ -26,7 +27,15 @@ export type ShareLinkFields = {
   imageUrl?: string;
   title?: string;
   description?: string;
+  imageHeight?: number;
+  imageWidth?: number;
 };
+
+export interface ApiKeysCollection {
+  apiKey: string;
+  enabled: boolean;
+  created: Timestamp;
+}
 
 /** Fields found in the firestore share-links collection.  */
 export enum ShareLinksCollection {
@@ -34,6 +43,16 @@ export enum ShareLinksCollection {
   IMAGE_URL = "imageUrl",
   TITLE = "title",
   DESCRIPTION = "description",
+  IMAGE_HEIGHT = "imageHeight",
+  IMAGE_WIDTH = "imageWidth",
+}
+
+/** General fields used in the API */
+export enum APIFields {
+  API_KEY = "apiKey",
+  EMAIL = "email",
+  ENABLED = "enabled",
+  ID = "id",
 }
 
 /**
@@ -117,19 +136,26 @@ export function isValidUrl(urlString: string | undefined): boolean {
 }
 
 /**
- * Verify a Firebase ID token is valid.
+ * Verify a Firebase ID token is valid and belongs to an @actnowcoalition.org account.
  *
  * @param token Firebase ID token to verify.
  * @returns True if the token is valid, throws an error otherwise.
  */
-export async function verifyIdToken(token: string | undefined) {
+ export async function verifyIdToken(token: string | undefined) {
   if (!token) {
     throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
   }
   return firebaseApp
     .auth()
     .verifyIdToken(token)
-    .then(() => true)
+    .then((token) => {
+      // Ensure user is on an actnowcoalition.org account.
+      const domain = token.email?.split("@")[1];
+      if (domain !== "actnowcoalition.org") {
+        throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
+      }
+      return true;
+    })
     .catch((error) => {
       console.error(error);
       throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);

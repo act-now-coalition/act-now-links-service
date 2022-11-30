@@ -1,6 +1,8 @@
 import fetch, { Response } from "node-fetch";
 import { API_BASE_URL, createUniqueId, ShareLinkFields } from "../utils";
 import { getShareLinkErrorByCode, ShareLinkErrorCode } from "../error-handling";
+import { firebaseApp } from "../init";
+import { randomUUID } from "crypto";
 
 export const TEST_PAYLOAD: ShareLinkFields = {
   url: "https://www.covidactnow.org",
@@ -13,7 +15,7 @@ export const TEST_SHARE_LINK_URL = `${API_BASE_URL}/go/${createUniqueId(
   JSON.stringify(TEST_PAYLOAD)
 )}`;
 
-export const TEST_EMAIL = "email@test.com";
+export const TEST_EMAIL = "email@actnowcoalition.org";
 
 /**
  * Registers a new share link for the given arguments, or returns the existing one.
@@ -23,7 +25,7 @@ export const TEST_EMAIL = "email@test.com";
  * @returns Response from the registerUrl endpoint.
  */
 export async function registerUrl(
-  payload: Record<string, string | undefined>,
+  payload: Record<string, string | number | undefined>,
   apiKey: string
 ): Promise<Response> {
   return await fetch(`${API_BASE_URL}/registerUrl?apiKey=${apiKey}`, {
@@ -87,22 +89,15 @@ export async function getOrRegisterIdToken(
 }
 
 /**
- * Retrieves the existing or registers a new API key for the given email.
- * @param email Email to register API key for.
- * @param idToken ID token to use for authentication.
- * @returns The API key.
+ * Inserts an API key document into the Firestore database.
+ *
+ * @param email Email to register user with.
+ * @returns Test API key.
  */
-export async function getOrRegisterApiKey(
-  email: string,
-  idToken: string
-): Promise<Response> {
-  const res = await fetch(`${API_BASE_URL}/auth/createApiKey`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify({ email }),
-  });
-  return res;
+export async function createTestApiKey(email: string) {
+  const firestoreDb = firebaseApp.firestore();
+  const apiKey = randomUUID();
+  const apiKeyCollection = firestoreDb.collection("apiKeys");
+  await apiKeyCollection.doc(email).set({ apiKey, enabled: true });
+  return apiKey;
 }

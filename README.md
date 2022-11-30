@@ -16,18 +16,12 @@ Service to generate sharable links with meta tags and dynamic preview images.
 * [Running emulators for local development](#running-emulators-for-local-development)
 * [Deploying changes](#deploying-changes)
 
-[Firebase ID Tokens](#using-firebase-id-tokens)
-* [Generating new Firebase ID Tokens](#using-firebase-id-tokens)
-
 [Insomnia](#insomnia)
 * [Using Insomnia to explore and debug the API](#insomnia)
 
 ## API
 
 API base URL: `https://share.actnowcoalition.org`
-
-Endpoints prefixed with `/auth/` require a valid temporary Firebase ID token. 
-To learn how to generate a token, see [Using Firebase ID Tokens](#using-firebase-id-tokens).
 
 ### Creating a share link
 
@@ -44,13 +38,15 @@ Requires a valid API key. If you do not have a key and would like to register on
 
 ##### Data Parameters
 
-|     Parameter      | Data Type | Description | Required |
-| ----------- | ----------- | ---------------| ------------|                 
-| `url`      | `string`      |  Url to create share link for | `true` |
-| `title`   | `string`        | Title meta tag                 | `false` |
-| `description`   | `string`        | Description meta tag  | `false` |
-| `imageUrl`   | `string`        | Url of image to use as image meta tag | `false` |
-| `apiKey`    | `string`      | Valid API key to authorize the request. <br/> Can also be passed as a query parameter using `?apiKey=API_KEY_HERE`. | `true` | 
+| Parameter    | Data Type   | Description                                  | Required |
+| -----------  | ----------- | -------------------------------------------- | -------- |                 
+| `url`        | `string`    |  Url to create share link for                | `true`   |
+| `title`      | `string`    | Title meta tag                               | `false`  |
+| `description`| `string`    | Description meta tag                         | `false`  |
+| `imageUrl`   | `string`    | Url of image to use as image meta tag        | `false`  |
+| `imageHeight`| `number`    | Height of preview image (imageUrl) in pixels | `false`  |
+| `imageHeight`| `number`    | Width of preview image (imageUrl) in pixels  | `false`  |
+| `apiKey`     | `string`    | Valid API key to authorize the request. <br/> Can also be passed as a query parameter using `?apiKey=API_KEY_HERE`.| `true` | 
 
 
 #### Success response
@@ -141,86 +137,6 @@ Serves screenshot of targeted URL to request URL.
 curl -v -X GET "https://share.actnowcoalition.org/screenshot?url=https://covidactnow.org/internal/share-image/states/ma" > img.png
 ```
 
-### Creating a new API key
-
-Registers a new API key for the supplied email address. 
-
-If an API key already exists for the given email, the existing key is returned.
-
-#### Request
-
-* URL:  `/api/auth/createApiKey`
-* Method: `POST`
-* Headers: 
-  * `Content-Type: 'application/json'`
-  * `Authorization: 'Bearer <Firebase ID Token>'`
-
-##### Data Parameters
-
-|     Parameter      | Data Type | Description | Required |
-| ----------- | ----------- | ---------------| ------------|                 
-| `email`      | `email`      |  Email to register API key for | `true` |
-
-#### Success Response
-
-Returns a JSON payload with the newly registered or existing API key.
-
-* **Code:** `200`
-* **Content:** `{ "apiKey": <api-key> }`
-
-#### Example
-
-##### `./email.json`
-
-```json
-{
-  "email": "email-to-register@actnowcoalition.org"
-}
-```
-
-```bash
-curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://share.actnowcoalition.org/auth/createApiKey -d @email.json
-```
-
-### Modify an API Key
-
-Disables or enables the API key for the given email.
-
-#### Request
-
-* URL:  `/api/auth/modifyApiKey`
-* Method: `POST`
-* Headers: 
-  * `Content-Type: 'application/json'`
-  * `Authorization: 'Bearer <Firebase ID Token>'`
-
-#### Data Parameters
-
-|     Parameter      | Data Type | Description | Required |
-| ----------- | ----------- | ---------------| ------------|                 
-| `email`      | `email`      |  Email of API key to modify | `true` |
-
-#### Success Response
-
-* **Code:** `200`
-* **Content:** `Success. API key status set to <true/false>`
-
-#### Example
-
-##### `./data.json`
-
-```json
-{
-  "email": "email-to-modify@actnowcoalition.org",
-  "enabled": false
-}
-```
-
-```bash
-curl -v -X POST -H Content-Type: 'application/json' -H 'Authorization: Bearer <Firebase ID Token>' https://share.actnowcoalition.org/auth/modifyApiKey -d @data.json
-```
-
-
 ## Setup
 
 ### Getting Started
@@ -252,20 +168,6 @@ For local development, we can run emulators such that we do not need to deploy o
 Deploys are handled automatically by the [Firebase functions deploy](https://github.com/covid-projections/act-now-links-service/actions/workflows/functions-deploy.yml) Github action. The workflow is triggered on pushes to the `main` and `develop` branches so that the deployed functions will reflect the most up-to-date status of the repository.
 
 If need be, you can deploy functions yourself by running `yarn deploy` in `functions/`, but this is generally discouraged as it disrupts the symmetry between Github and Firebase.
-
-
-## Using Firebase ID Tokens
-
-[Firebase ID Tokens](https://firebase.google.com/docs/auth/admin/verify-id-tokens) are short-lived authorization tokens that verify a
-user is an authenticated user of the Firebase project. We use these tokens to authorize users to create and modify the persistent API keys used
-for creating share links.
-
-To create an ID Token:
- - Before creating your first ID token, go to the Authentication section of the `act-now-links-dev` or `act-now-links-prod` Firebase project.
-    - Under the `Users` tab, select `Add User`. Enter your email and create a new password for yourself. We will use this login to generate new tokens.
-- Navigate to the `act-now-links-service/` directory and run `yarn generate-id-token <email> <password> <projectId>`. For `projectId`, use `develop` for `act-now-links-dev` and `production` for `act-now-links-prod`. This will return an ID token that is valid for the next hour for the specified project.
-
-
 
 ## Insomnia
 

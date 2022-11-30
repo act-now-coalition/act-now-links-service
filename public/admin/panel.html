@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Links Service Admin Panel</title>
+    <script src="../dist/src/panel.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+      crossorigin="anonymous"
+    />
+    <link href="../index.css" rel="stylesheet"></link>
+    <link href="./panel.css" rel="stylesheet"></link>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-transparent">
+      <a class="navbar-brand" href="../index.html">
+        <img src="../logo.svg"></img>
+      </a>
+      <span id="project-label"></span>
+    </nav>
+    <div class="container-md d-flex justify-content-center">
+      <div class="vstack">
+        <div id="create-api-key">
+          <h3>Register a new or fetch an existing API Key</h3>
+          <form id="register-key">
+            <div class="mb-3 input-group">
+              <input
+                type="text"
+                class="form-control"
+                id="apiKeyName"
+                placeholder="Email to register..."
+              />
+              <div class="input-group-append">
+                <button
+                  type="submit"
+                  value="send"
+                  class="btn btn-outline-secondary"
+                >
+                  Get API Key
+                </button>
+              </div>
+            </div>
+          </form>
+          <div id="api-response"></div>
+        </div>
+        <h3>API Key Catalog</h3>
+        <table id="api-key-table">
+          <tr>
+            <th>Email</th>
+            <th>API Key</th>
+            <th>Creation Date</th>
+            <th>Key is Enabled</th>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
