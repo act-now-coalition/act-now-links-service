@@ -1,0 +1,25 @@
+input {
+  max-width: 40%;
+}
+.navbar {
+  padding-bottom: 25px;
+  padding-left: 25px;
+  padding-top: 10px;
+}
+#project-id {
+  color: gray;
+  font-size: larger;
+}
+.container-md {
+  background-color: white;
+  padding: 50px;
+  border-radius: 4px;
+}
+.form-select {
+  max-width: 50%;
+}
+#api-response {
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
