@@ -8,7 +8,6 @@ module.exports = {
       {
         test: /\.ts?$/,
         use: "ts-loader",
-        // set excludes in tsconfig.json instead, b/c we use ts-loader
       },
     ],
   },

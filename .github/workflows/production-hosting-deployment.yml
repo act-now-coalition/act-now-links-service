@@ -23,5 +23,5 @@ jobs:
       - name: Build static files
         run: yarn build
       - name: Deploy hosting
-        run: firebase deploy --only hosting --project develop
+        run: firebase deploy --only hosting --project production
 

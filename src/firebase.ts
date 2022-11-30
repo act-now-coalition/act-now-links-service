@@ -103,13 +103,13 @@ export async function createOrFetchExistingAPIKey(email: string) {
   if (!email || !/\@/.test(email)) {
     throw new Error("Invalid email address");
   }
-  const apiKey = uuid();
   const keyCollection = collection(firestore, API_KEY_COLLECTION);
   const apiKeyDoc = doc(keyCollection, email);
   const apiKeyDocData = await getDoc(apiKeyDoc);
   if (apiKeyDocData.exists()) {
     return apiKeyDocData.data().apiKey as string;
   } else {
+    const apiKey = uuid();
     await setDoc(apiKeyDoc, {
       apiKey,
       created: new Date(),
