@@ -1,17 +1,17 @@
-name: Production Firebase functions deploy
+name: Develop Hosting deploy
 
 on:
   push:
-    branches: [main]
+    branches: [develop]
 
 jobs:
   deploy-functions:
     runs-on: ubuntu-latest
-    environment:
-      name: production
+    environment: 
+      name: develop
     defaults:
       run:
-        working-directory: functions
+        working-directory: public
     steps:
       - uses: actions/checkout@v2
       - name: 'Authenticate to Google Cloud'
@@ -19,6 +19,7 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       - name: Install dependencies
-        run: yarn global add firebase-tools && yarn install
-      - name: Deploy functions
-        run: firebase deploy --only functions --project production
+        run: yarn install && yarn build
+      - name: Deploy hosting
+        run: firebase deploy --only hosting --project develop
+
