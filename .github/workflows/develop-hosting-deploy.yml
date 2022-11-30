@@ -2,7 +2,7 @@ name: Develop Hosting deploy
 
 on:
   push:
-    branches: [develop]
+    branches: [smcclure17/web-ui]
 
 jobs:
   deploy-functions:
