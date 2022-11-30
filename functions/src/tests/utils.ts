@@ -89,10 +89,10 @@ export async function getOrRegisterIdToken(
 }
 
 /**
- * Inserts a mock API key document into the Firestore database.
+ * Inserts an API key document into the Firestore database.
  *
- * @param email Email to register mock user with.
- * @returns Mock API key.
+ * @param email Email to register user with.
+ * @returns Test API key.
  */
 export async function createTestApiKey(email: string) {
   const firestoreDb = firebaseApp.firestore();
