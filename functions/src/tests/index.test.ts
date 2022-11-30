@@ -6,21 +6,16 @@ import {
   URL_NOT_FOUND_ERROR,
   INVALID_URL_ERROR,
   registerUrl,
-  getOrRegisterIdToken,
-  getOrRegisterApiKey,
+  createTestApiKey,
   TEST_EMAIL,
 } from "./utils";
 
-let idToken: string;
 let apiKey: string;
 beforeAll(async () => {
   if (!process.env.FUNCTIONS_EMULATOR) {
     throw new Error("Test suite must be run with the Firebase emulator.");
   }
-  idToken = await getOrRegisterIdToken(TEST_EMAIL, "password");
-  const apiKeyRes = await getOrRegisterApiKey(TEST_EMAIL, idToken);
-  const apiKeyJson = await apiKeyRes.json();
-  apiKey = apiKeyJson.apiKey;
+  apiKey = await createTestApiKey(TEST_EMAIL);
   await registerUrl(TEST_PAYLOAD, apiKey);
 });
 
@@ -89,43 +84,5 @@ describe("GET /screenshot", () => {
     const imagePage = "https://covidactnow.org/internal/share-image/states/ma";
     const response = await fetch(`${API_BASE_URL}/screenshot?url=${imagePage}`);
     expect(response.ok).toBe(true);
-  });
-});
-
-describe("POST /auth/createApiKey", () => {
-  test("returns a 200 and expected API key for email with existing key.", async () => {
-    const apiKeyRes = await getOrRegisterApiKey(TEST_EMAIL, idToken);
-    const apiKeyJson = await apiKeyRes.json();
-    expect(apiKeyJson.apiKey).toBe(apiKey);
-  });
-
-  test("returns a 403 if ID token is invalid.", async () => {
-    const res = await getOrRegisterApiKey(TEST_EMAIL, "not-a-valid-token");
-    expect(res.status).toBe(403);
-  });
-});
-
-describe("POST /auth/modifyApiKey", () => {
-  const modifyApiKey = async (email: string, token: string) => {
-    return await fetch(`${API_BASE_URL}/auth/modifyApiKey`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ email, enabled: false }),
-    });
-  };
-
-  test("returns a 200 and toggles the API key.", async () => {
-    await getOrRegisterApiKey("another@email.com", idToken); // create a second API key to toggle
-    const res = await modifyApiKey("another@email.com", idToken);
-    expect(res.ok).toBe(true);
-    expect(await res.text()).toBe("Success. API key status set to false");
-  });
-
-  test("returns a 403 if ID token is invalid.", async () => {
-    const res = await modifyApiKey(TEST_EMAIL, "not-a-valid-token");
-    expect(res.status).toBe(403);
   });
 });

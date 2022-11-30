@@ -1,6 +1,8 @@
 import fetch, { Response } from "node-fetch";
 import { API_BASE_URL, createUniqueId, ShareLinkFields } from "../utils";
 import { getShareLinkErrorByCode, ShareLinkErrorCode } from "../error-handling";
+import { firebaseApp } from "../init";
+import { randomUUID } from "crypto";
 
 export const TEST_PAYLOAD: ShareLinkFields = {
   url: "https://www.covidactnow.org",
@@ -87,22 +89,15 @@ export async function getOrRegisterIdToken(
 }
 
 /**
- * Retrieves the existing or registers a new API key for the given email.
- * @param email Email to register API key for.
- * @param idToken ID token to use for authentication.
- * @returns The API key.
+ * Inserts an API key document into the Firestore database.
+ *
+ * @param email Email to register user with.
+ * @returns Test API key.
  */
-export async function getOrRegisterApiKey(
-  email: string,
-  idToken: string
-): Promise<Response> {
-  const res = await fetch(`${API_BASE_URL}/auth/createApiKey`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify({ email }),
-  });
-  return res;
+export async function createTestApiKey(email: string) {
+  const firestoreDb = firebaseApp.firestore();
+  const apiKey = randomUUID();
+  const apiKeyCollection = firestoreDb.collection("apiKeys");
+  await apiKeyCollection.doc(email).set({ apiKey, enabled: true });
+  return apiKey;
 }
