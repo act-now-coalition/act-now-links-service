@@ -3,9 +3,8 @@ import { Request, Response } from "firebase-functions";
 import * as compression from "compression";
 import * as express from "express";
 import * as cors from "cors";
-import { APIKeyHandler } from "./APIKeyHandler";
 import { takeScreenshot } from "./screenshot";
-import { isAPIKeyAuthorized, isFirebaseAuthorized } from "./auth";
+import { isAPIKeyAuthorized } from "./auth";
 import { firebaseApp } from "./init";
 import {
   sendAndThrowUnexpectedError,
@@ -23,8 +22,6 @@ import {
 import {
   validate,
   registerUrlValidationRules,
-  createApiKeyValidationRules,
-  modifyApiKeyValidationRules,
   queryUrlValidationRule,
 } from "./validation";
 
@@ -33,7 +30,6 @@ const firestoreDb = firebaseApp.firestore();
 // We want Firestore to omit them if they're not specified.
 firestoreDb.settings({ ignoreUndefinedProperties: true });
 const urlCollection = firestoreDb.collection(SHARE_LINK_FIRESTORE_COLLECTION);
-const apiKeyHandler = new APIKeyHandler(firestoreDb);
 const app = express();
 app.use(cors({ origin: "*" }));
 app.use(compression());
@@ -217,77 +213,3 @@ app.get(
       });
   }
 );
-
-/**
- * Create an API key for the given email.
- *
- * If an API key already exists for the given email it will be returned.
- *
- * Requires Bearer authorization token with a valid Firebase ID token.
- *
- * Expected url structure:
- * https://us-central1-act-now-links-dev.cloudfunctions.net/api/createApiKey?email=EMAIL_HERE
- */
-app.post(
-  "/auth/createApiKey",
-  isFirebaseAuthorized,
-  createApiKeyValidationRules(),
-  validate,
-  (req: Request, res: Response) => {
-    return apiKeyHandler
-      .createKey(req.body.email as string)
-      .then((apiKey) => {
-        res.status(200).send({ apiKey });
-      })
-      .catch((error: Error) => {
-        sendAndThrowShareLinkOrUnexpectedError(error, res);
-      });
-  }
-);
-
-/**
- * Disable or enable API key for the given email.
- *
- * Requires Bearer authorization token with a valid Firebase ID token.
- *
- * Requires a `content-type: application/json` header and a JSON body with the following parameters:
- *  - email: string
- *  - enabled: string
- *
- * When enabled is set to "true" the API key will be enabled,
- * if set to "false" the API key will be disabled.
- *
- * Expected url structure:
- * https://us-central1-act-now-links-dev.cloudfunctions.net/api/modifyApiKey
- */
-app.post(
-  "/auth/modifyApiKey",
-  isFirebaseAuthorized,
-  modifyApiKeyValidationRules(),
-  validate,
-  (req: Request, res: Response) => {
-    const enabled = req.body.enabled;
-    apiKeyHandler
-      .modifyKey(req.body.email as string, enabled)
-      .then((enabled) => {
-        res.status(200).send(`Success. API key status set to ${enabled}`);
-      })
-      .catch((error) => {
-        sendAndThrowShareLinkOrUnexpectedError(error, res);
-      });
-  }
-);
-
-/** 
- * Returns all the registered API keys and their properties. 
- * 
- * Requires Bearer authorization token with a valid Firebase ID token.
- */
-app.get("/auth/allApiKeys", isFirebaseAuthorized, (res: Response) => {
-  return apiKeyHandler.allKeys().then((keys) => {
-    res.status(200).send({ apiKeys: keys });
-  }).catch((error: Error) => {
-    sendAndThrowShareLinkOrUnexpectedError(error, res);
-  })
-});
-

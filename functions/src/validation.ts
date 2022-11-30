@@ -26,17 +26,6 @@ export const registerUrlValidationRules = () => {
   ];
 };
 
-export const createApiKeyValidationRules = () => {
-  return [body(APIFields.EMAIL).isEmail()];
-};
-
-export const modifyApiKeyValidationRules = () => {
-  return [
-    body(APIFields.EMAIL).isEmail(),
-    body(APIFields.ENABLED).isBoolean({ strict: true }),
-  ];
-};
-
 export const queryUrlValidationRule = () => {
   return [query(ShareLinksCollection.URL).custom(isValidUrl)];
 };
