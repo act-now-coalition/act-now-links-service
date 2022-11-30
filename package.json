@@ -6,8 +6,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "start": "ts-node",
-    "generate-id-token": "ts-node ./scripts/generate-id-token.ts"
+    "start": "ts-node"
   },
   "dependencies": {
     "ts-node": "^10.9.1",
