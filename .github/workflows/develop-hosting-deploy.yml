@@ -19,7 +19,7 @@ jobs:
         with:
           credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
       - name: Install dependencies
-        run: yarn install && yarn global add firebase-tools && yarn build
+        run: yarn install && yarn build
       - name: Deploy hosting
-        run: firebase deploy --only hosting --project develop
+        run: npx firebase deploy --only hosting --project develop
 
