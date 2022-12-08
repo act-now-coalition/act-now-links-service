@@ -6,7 +6,8 @@
   "scripts": {
     "develop": "webpack-dev-server --mode development",
     "build": "webpack --mode production",
-    "build:watch": "webpack --watch --mode production"
+    "build:watch": "webpack --watch --mode production",
+    "prettier:write": "yarn prettier --write ."
   },
   "dependencies": {
     "firebase": "^9.14.0",
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "html-webpack-plugin": "^5.5.0",
+    "prettier": "2.8.1",
     "ts-loader": "^9.4.1",
     "webpack": "^5.75.0",
     "webpack-cli": "^5.0.0",
