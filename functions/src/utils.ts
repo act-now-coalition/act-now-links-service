@@ -2,7 +2,7 @@ import * as crypto from "crypto";
 import * as firebaseSettings from "../../firebase.json";
 import { firebaseApp } from "./init";
 import { ShareLinkError, ShareLinkErrorCode } from "./error-handling";
-import { Timestamp } from "firebase/firestore"
+import { Timestamp } from "firebase/firestore";
 
 const localFunctionsPort = firebaseSettings.emulators.functions.port;
 const isEmulator = process.env.FUNCTIONS_EMULATOR === "true";
@@ -141,7 +141,7 @@ export function isValidUrl(urlString: string | undefined): boolean {
  * @param token Firebase ID token to verify.
  * @returns True if the token is valid, throws an error otherwise.
  */
- export async function verifyIdToken(token: string | undefined) {
+export async function verifyIdToken(token: string | undefined) {
   if (!token) {
     throw new ShareLinkError(ShareLinkErrorCode.INVALID_TOKEN);
   }
