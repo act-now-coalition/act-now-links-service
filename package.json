@@ -7,7 +7,7 @@
     "develop": "webpack-dev-server --mode development",
     "build": "webpack --mode production",
     "build:watch": "webpack --watch --mode production",
-    "prettier:write": "yarn prettier --write .",
+    "prettier:write": "yarn prettier --write --ignore-unknown .",
     "prepare": "husky install"
   },
   "lint-staged": {
