@@ -73,7 +73,7 @@ function submitApiKeyRegister(event: SubmitEvent) {
   event.preventDefault();
   const email = (document.getElementById("apiKeyName") as HTMLInputElement)
     .value;
-    createOrFetchExistingAPIKey(email)
+  createOrFetchExistingAPIKey(email)
     .then((key) => {
       setApiResponseText(`Success! API key: ${key}`, successColor);
     })
