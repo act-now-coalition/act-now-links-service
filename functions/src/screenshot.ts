@@ -21,6 +21,7 @@ async function getBrowser(): Promise<puppeteer.Browser> {
           height: BROWSER_HEIGHT,
         },
         headless: true,
+        args: ["--proxy-server='direct://'", "--proxy-bypass-list=*"],
       })
       .then((browser) => {
         console.log("Browser started.");
