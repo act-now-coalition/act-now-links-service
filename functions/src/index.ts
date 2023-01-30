@@ -37,7 +37,7 @@ app.use(compression());
 // See: https://firebase.google.com/docs/functions/manage-functions#min-max-instances
 const runtimeOpts: functions.RuntimeOptions = {
   timeoutSeconds: 90,
-  memory: "2GB", // Increasing this for CPU reasons (to increase screenshot speed) not memory reasons.
+  memory: "4GB", // Increasing this for CPU reasons (to increase screenshot speed) not memory reasons.
 };
 export const api = functions.runWith(runtimeOpts).https.onRequest(app);
 
