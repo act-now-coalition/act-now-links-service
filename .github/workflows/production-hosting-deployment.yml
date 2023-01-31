@@ -7,21 +7,20 @@ on:
 jobs:
   deploy-functions:
     runs-on: ubuntu-latest
-    environment: 
+    environment:
       name: production
     defaults:
       run:
         working-directory: public
     steps:
       - uses: actions/checkout@v2
-      - name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v0'
+      - name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v0"
         with:
-          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          credentials_json: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
       - name: Install dependencies
         run: yarn install && yarn global add firebase-tools
       - name: Build static files
         run: yarn build
       - name: Deploy hosting
         run: firebase deploy --only hosting --project production
-
