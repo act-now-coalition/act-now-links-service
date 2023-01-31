@@ -21,6 +21,9 @@ async function getBrowser(): Promise<puppeteer.Browser> {
           height: BROWSER_HEIGHT,
         },
         headless: true,
+        // Options to speed up chromium.
+        // See https://github.com/puppeteer/puppeteer/issues/1718#issuecomment-397532083
+        args: ["--proxy-server='direct://'", "--proxy-bypass-list=*"],
       })
       .then((browser) => {
         console.log("Browser started.");
