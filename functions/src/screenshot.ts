@@ -54,11 +54,12 @@ export async function takeScreenshot(
   });
 
   // Ensure no Metric-aware data loading components are still loading.
+  // waitForSelector() with `hidden: true` does not work for this because the
+  // sentinel divs are set to `display: none` by default, which satisfies the condition.
   console.log('Waiting for all "act-now-component-loading" divs to disappear.');
-  await tab.waitForSelector(".act-now-component-loading", {
-    timeout: TIMEOUT,
-    hidden: true,
-  });
+  await tab.waitForFunction(
+    () => !document.querySelector(".act-now-component-loading")
+  );
 
   console.log("Capturing screenshot.");
   const file = path.join(os.tmpdir(), `${filename}.png`);
