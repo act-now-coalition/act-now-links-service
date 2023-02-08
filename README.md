@@ -104,13 +104,13 @@ curl -v -X GET "https://share.actnowcoalition.org/shareLinksByUrl?url=https://ww
 
 Generates a screenshot of the given target URL and returns the image.
 
-The target URL must contain `<div>`s with `screenshot` and `screenshot-ready` CSS classes to indicate where to capture and when the screenshot is ready to be taken, e.g.:
+The target page must contain an element with `screenshot` as a CSS class name to indicate where the
+screenshot will be captured. Because components on the target page can take time to load, the endpoint also uses specific class names to tell when the page is ready to be captured. The screenshot is captured when:
 
-```html
-<div class="screenshot">
-  <div class="screenshot-ready">{content to screenshot}</div>
-</div>
-```
+- an instance of the `act-now-component-loaded` CSS class is detected on the page
+- no instances of the `act-now-component-loading` CSS classes are detected
+
+If you are capturing a page with multiple components that take time to load, append `act-now-component-loading` classes to the components while they are loading, and `act-now-component-loaded` classes when they finish loading. To see how this can be implemented, see an example [`act-now-packages` component](https://github.com/act-now-coalition/act-now-packages/blob/develop/src/ui-components/components/MetricDot/MetricDot.tsx#L42).
 
 We can combine this endpoint with `/api/registerUrl` to create share links with dynamic images by
 supplying an `api/screenshot/` URL as the `imageUrl` data param when creating a new share link.
