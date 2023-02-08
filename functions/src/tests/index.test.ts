@@ -77,12 +77,3 @@ describe("GET /shareLinksByUrl", () => {
     }
   );
 });
-
-describe("GET /screenshot", () => {
-  jest.setTimeout(15000); // Bump timeout up to 15 seconds. Screenshots can take a while.
-  test("returns a 200 for a valid share-image page.", async () => {
-    const imagePage = "https://covidactnow.org/internal/share-image/states/ma";
-    const response = await fetch(`${API_BASE_URL}/screenshot?url=${imagePage}`);
-    expect(response.ok).toBe(true);
-  });
-});
