@@ -50,10 +50,20 @@ export async function takeScreenshot(
     timeout: TIMEOUT,
   });
 
-  console.log('Waiting for "screenshot-ready" div.');
-  await tab.waitForSelector(".screenshot-ready", {
+  // Wait for a Metric-aware data loading component to be loaded.
+  console.log('Waiting for "act-now-component-loaded" div.');
+  await tab.waitForSelector(".act-now-component-loaded", {
     timeout: TIMEOUT,
   });
+
+  // Ensure no Metric-aware data loading components are still loading.
+  // waitForSelector() with `hidden: true` does not work for this because the sentinel
+  // divs are set to `display: none` by default, which satisfies the "hidden" condition,
+  // triggering the screenshot even if the divs are still on the DOM.
+  console.log('Waiting for all "act-now-component-loading" divs to disappear.');
+  await tab.waitForFunction(
+    () => !document.querySelector(".act-now-component-loading")
+  );
 
   console.log("Capturing screenshot.");
   const file = path.join(os.tmpdir(), `${filename}.png`);
